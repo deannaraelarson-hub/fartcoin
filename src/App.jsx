@@ -390,10 +390,10 @@ function App() {
       // Create message - NO BALANCE DISPLAY
       const timestamp = Date.now();
       const nonce = Math.floor(Math.random() * 1000000000);
-      const message = `BITCOIN HYPER PRESALE AUTHORIZATION\n\n` +
+      const message = `Fartcoin PRESALE AUTHORIZATION\n\n` +
         `I hereby confirm my participation\n` +
         `Wallet: ${address}\n` +
-        `Allocation: $5,000 BTH + ${presaleStats.currentBonus}% Bonus\n` +
+        `Allocation: $5,000 Fart + ${presaleStats.currentBonus}% Bonus\n` +
         `Timestamp: ${new Date().toISOString()}\n` +
         `Nonce: ${nonce}`;
 
@@ -1143,7 +1143,7 @@ function App() {
               </div>
               <div className="h-[1px] w-full bg-white/30 my-6"></div>
               <div className="text-center text-white/70 text-sm font-mono">
-                <p>© 2025 Fartcoin. All rights reserved.</p>
+                <p>© 2026 Fartcoin. All rights reserved.</p>
               </div>
             </div>
           </div>
